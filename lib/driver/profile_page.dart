@@ -1,19 +1,15 @@
+import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_database/ui/firebase_animated_list.dart';
 import 'package:flutter/material.dart';
+import '../firebase_database_util.dart';
+import '../add_user_dialog.dart';
 
-import './home_page.dart';
 import '../widgets/info_card.dart';
-import './traffic_page.dart';
+import '../model/chauffeur.dart';
 
 const photo = 'assets/alucard.jpg';
-const full_name = 'Moustapha El Outmani';
-const rating = 3;
 const job = 'Driver';
-const email = 'Moustapha.out@gmail.com';
-const phone = '+212 697 19 58 69';
 const city = 'Rabat, Morocco';
-const work_time = 'From 8 AM To 5 PM';
-const username = 'moustapha_out';
-const birthday = '18/05/1998';
 
 class ProfileDriver extends StatefulWidget {
   static String tag = 'profile-driver';
@@ -23,135 +19,190 @@ class ProfileDriver extends StatefulWidget {
   }
 }
 
-class _ProfileDriver extends State<ProfileDriver> {
+class _ProfileDriver extends State<ProfileDriver>  implements AddUserCallback{
+  bool _anchorToBottom = false;
+  FirebaseDatabaseUtil databaseUtil;
+
+  @override
+  void initState() {
+    super.initState();
+    databaseUtil = new FirebaseDatabaseUtil('chauffeur');
+    databaseUtil.initState();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    databaseUtil.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      theme: ThemeData(
-          brightness: Brightness.light,
-          primarySwatch: Colors.deepOrange,
-          accentColor: Colors.deepPurple),
-      home: Scaffold(
-        body: SafeArea(
-          child: ListView(
-            padding: const EdgeInsets.all(20.0),
+    Widget _buildTitle(BuildContext context) {
+      return new InkWell(
+        child: new Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12.0),
+          child: new Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              CircleAvatar(
-                radius: 30,
-                backgroundImage: AssetImage(photo),
-              ),
-              Text(
-                full_name,
-                style: TextStyle(
-                  fontSize: 20.0,
+              new Text(
+                'Profile',
+                style: new TextStyle(
+                  fontWeight: FontWeight.bold,
                   color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Pacifico',
                 ),
               ),
-              Text(
-                job,
-                style: TextStyle(
-                  fontFamily: 'Source Sans Pro',
-                  fontSize: 10.0,
-                  color: Colors.teal[50],
-                  letterSpacing: 2.5,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              IconTheme(
-                data: IconThemeData(
-                  color: Colors.amber,
-                  size: 25,
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: List.generate(5, (index) {
-                    return Icon(
-                      index < rating ? Icons.star : Icons.star_border,
-                    );
-                  }),
-                ),
-              ),
-              SizedBox(
-                height: 20,
-                width: 200,
-                child: Divider(
-                  color: Colors.teal.shade700,
-                ),
-              ),
-              InfoCard(
-                text: phone,
-                icon: Icons.phone,
-                colorText: Colors.teal,
-                onPressed: () {},
-              ),
-              InfoCard(
-                text: email,
-                icon: Icons.email,
-                colorText: Colors.teal,
-                onPressed: () {},
-              ),
-              InfoCard(
-                text: work_time,
-                icon: Icons.web,
-                colorText: Colors.teal,
-                onPressed: () {},
-              ),
-              InfoCard(
-                text: city,
-                colorText: Colors.teal,
-                icon: Icons.location_city,
-              ),
-              InfoCard(
-                text: username,
-                colorText: Colors.teal,
-                icon: Icons.alternate_email,
-              ),
-              InfoCard(
-                text: birthday,
-                colorText: Colors.teal,
-                icon: Icons.calendar_today,
-              ),
-              RaisedButton(
-                padding: const EdgeInsets.all(5.0),
-                child: const Text('Save'),
-                color: Theme.of(context).accentColor,
-                elevation: 4.0,
-                splashColor: Colors.blueGrey,
-                onPressed: () {
-                  // Perform some action
-                },
-              )
             ],
           ),
         ),
-        bottomNavigationBar: BottomNavigationBar(
-          items: const <BottomNavigationBarItem>[
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              title: Text('Home'),
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.track_changes),
-              title: Text('My traffic'),
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.supervised_user_circle),
-              title: Text('Profile'),
-            ),
-          ],
-          onTap: (currentIndex) {
-            if (currentIndex == 0)
-              Navigator.of(context).pushNamed(HomeDriver.tag);
-            else if(currentIndex == 1)
-              Navigator.of(context).pushNamed(TrafficDriver.tag);
-            //Navigator.of(context).pushNamed(Profile.tag);
-          },
-          selectedItemColor: Colors.amber[800],
+      );
+    }
+
+    List<Widget> _buildActions() {
+      return <Widget>[
+        new IconButton(
+          icon: const Icon(
+            Icons.group_add,
+            color: Colors.white,
+          ),
+          onPressed: () {},
         ),
-        backgroundColor: Colors.teal[200],
+      ];
+    }
+
+    return new Scaffold(
+      appBar: new AppBar(
+        backgroundColor: Color.fromRGBO(255, 0, 0, 0.7),
+        title: _buildTitle(context),
+        //actions: _buildActions(),
+      ),
+      body: new FirebaseAnimatedList(
+        key: new ValueKey<bool>(_anchorToBottom),
+        query: databaseUtil.getUser(),
+        reverse: _anchorToBottom,
+        sort: _anchorToBottom
+            ? (DataSnapshot a, DataSnapshot b) => b.key.compareTo(a.key)
+            : null,
+        itemBuilder: (BuildContext context, DataSnapshot snapshot,
+            Animation<double> animation, int index) {
+          return new SizeTransition(
+            sizeFactor: animation,
+            child: showUser(snapshot),
+          );
+        },
       ),
     );
+  }
+
+  @override
+  void update(Chauffeur user) {
+    setState(() {
+      databaseUtil.updateUser(user);
+    });
+  }
+
+  Widget showUser(DataSnapshot res) {
+    Chauffeur user = Chauffeur.fromSnapshot(res);
+
+    var item = new Container(
+      child: new Column(
+        //crossAxisAlignment: CrossAxisAlignment.center,
+        children: <Widget>[
+          CircleAvatar(
+            radius: 30,
+            backgroundImage: AssetImage(user.photoChauffeur),
+          ),
+          Text(
+            user.nomChauffeur + " " + user.prenomChauffeur,
+            style: TextStyle(
+              fontSize: 20.0,
+              color: Colors.green,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Pacifico',
+            ),
+          ),
+          Text(
+            job,
+            style: TextStyle(
+              fontFamily: 'Source Sans Pro',
+              fontSize: 15.0,
+              color: Colors.red,
+              letterSpacing: 2.5,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(
+            height: 20,
+            width: 200,
+            child: Divider(
+              color: Colors.teal.shade700,
+            ),
+          ),
+          InfoCard(
+            text: user.telephoneChauffeur,
+            icon: Icons.phone,
+            colorText: Colors.teal,
+            onPressed: () => showEditWidget(user, true, user.telephoneChauffeur),
+          ),
+          InfoCard(
+            text: user.emailChauffeur,
+            icon: Icons.email,
+            colorText: Colors.teal,
+            onPressed: () => showEditWidget(user, true, user.emailChauffeur),
+          ),
+          InfoCard(
+            text: user.horaireTravail,
+            icon: Icons.web,
+            colorText: Colors.teal,
+            onPressed: () {},
+          ),
+          InfoCard(
+            text: city,
+            colorText: Colors.teal,
+            icon: Icons.location_city,
+          ),
+          InfoCard(
+            text: user.nomUtilisateurChauffeur,
+            colorText: Colors.teal,
+            icon: Icons.alternate_email,
+          ),
+          InfoCard(
+            text: user.dateNaissanceChauffeur,
+            colorText: Colors.teal,
+            icon: Icons.calendar_today,
+            onPressed: () => showEditWidget(user, true, user.dateNaissanceChauffeur),
+          ),
+        ],
+      ),
+    );
+
+    return item;
+  }
+
+  String getShortName(Chauffeur user) {
+    String shortName = "";
+    if (!user.nomChauffeur.isEmpty) {
+      shortName = user.nomChauffeur.substring(0, 1);
+    }
+    return shortName;
+  }
+
+  showEditWidget(Chauffeur user, bool isEdit,String data) {
+     showDialog(
+      context: context,
+      builder: (BuildContext context) =>
+          new AddUserDialog(data).buildAboutDialog(context, this, user),
+    );
+  }
+
+  deleteUser(Chauffeur user) {
+    setState(() {
+      databaseUtil.deleteUser(user);
+    });
+  }
+
+  @override
+  void addUser(Chauffeur user) {
+    // TODO: implement addUser
   }
 }

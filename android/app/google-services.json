@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "580409624060",
+    "firebase_url": "https://maroctaxi-28d16.firebaseio.com",
+    "project_id": "maroctaxi-28d16",
+    "storage_bucket": "maroctaxi-28d16.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:580409624060:android:023149c1284db671",
+        "android_client_info": {
+          "package_name": "com.example.gestion_taxi"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "580409624060-0h5ki0eigglb2f6mqb9e35q54auogr0q.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAU8O1ixk9ku3Y6-i98ZhvCwwj1pjAqGYk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "580409624060-0h5ki0eigglb2f6mqb9e35q54auogr0q.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
