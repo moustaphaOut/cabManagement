@@ -1,7 +1,7 @@
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_database/ui/firebase_animated_list.dart';
 import 'package:flutter/material.dart';
-import '../firebase_database_util.dart';
+import '../database/firebase_database_util.dart';
 import '../add_user_dialog.dart';
 
 import '../widgets/info_card.dart';
@@ -58,7 +58,7 @@ class _ProfileDriver extends State<ProfileDriver>  implements AddUserCallback{
       );
     }
 
-    List<Widget> _buildActions() {
+    /*List<Widget> _buildActions() {
       return <Widget>[
         new IconButton(
           icon: const Icon(
@@ -68,7 +68,7 @@ class _ProfileDriver extends State<ProfileDriver>  implements AddUserCallback{
           onPressed: () {},
         ),
       ];
-    }
+    }*/
 
     return new Scaffold(
       appBar: new AppBar(
@@ -142,13 +142,13 @@ class _ProfileDriver extends State<ProfileDriver>  implements AddUserCallback{
             text: user.telephoneChauffeur,
             icon: Icons.phone,
             colorText: Colors.teal,
-            onPressed: () => showEditWidget(user, true, user.telephoneChauffeur),
+            onPressed: () => showEditWidget(user, true, user.telephoneChauffeur, "telephoneChauffeur"),
           ),
           InfoCard(
             text: user.emailChauffeur,
             icon: Icons.email,
             colorText: Colors.teal,
-            onPressed: () => showEditWidget(user, true, user.emailChauffeur),
+            onPressed: () => showEditWidget(user, true, user.emailChauffeur, "emailChauffeur"),
           ),
           InfoCard(
             text: user.horaireTravail,
@@ -170,7 +170,7 @@ class _ProfileDriver extends State<ProfileDriver>  implements AddUserCallback{
             text: user.dateNaissanceChauffeur,
             colorText: Colors.teal,
             icon: Icons.calendar_today,
-            onPressed: () => showEditWidget(user, true, user.dateNaissanceChauffeur),
+            onPressed: () => showEditWidget(user, true, user.dateNaissanceChauffeur, "dateNaissanceChauffeur"),
           ),
         ],
       ),
@@ -179,19 +179,19 @@ class _ProfileDriver extends State<ProfileDriver>  implements AddUserCallback{
     return item;
   }
 
-  String getShortName(Chauffeur user) {
+ /* String getShortName(Chauffeur user) {
     String shortName = "";
-    if (!user.nomChauffeur.isEmpty) {
+    if (user.nomChauffeur.isNotEmpty) {
       shortName = user.nomChauffeur.substring(0, 1);
     }
     return shortName;
-  }
+}*/
 
-  showEditWidget(Chauffeur user, bool isEdit,String data) {
+  showEditWidget(Chauffeur user, bool isEdit,String data, String nameDB) {
      showDialog(
       context: context,
       builder: (BuildContext context) =>
-          new AddUserDialog(data).buildAboutDialog(context, this, user),
+          new AddUserDialog(data).buildAboutDialog(context, this, user, nameDB),
     );
   }
 

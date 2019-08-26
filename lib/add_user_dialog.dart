@@ -1,24 +1,28 @@
 import 'package:flutter/material.dart';
 //import 'package:flutter_firebase_auth/user.dart';
 import './model/chauffeur.dart';
+import 'dart:async';
+
+import 'package:firebase_database/firebase_database.dart';
 
 class AddUserDialog {
+  final databaseReference = FirebaseDatabase.instance.reference();
   final teName = TextEditingController();
-  var mydata= "";
+  var mydata = "";
   Chauffeur user;
 
   static const TextStyle linkStyle = const TextStyle(
     color: Colors.blue,
     decoration: TextDecoration.underline,
   );
-  AddUserDialog(String textt){
+  AddUserDialog(String textt) {
     this.mydata = textt;
   }
-  Widget buildAboutDialog(BuildContext context,
-      AddUserCallback _myHomePageState, Chauffeur user) {
+  Widget buildAboutDialog(
+      BuildContext context, AddUserCallback _myHomePageState, Chauffeur user, String nameDB) {
     if (user != null) {
       this.user = user;
-      teName.text =mydata;
+      teName.text = mydata;
     }
 
     return new AlertDialog(
@@ -30,11 +34,17 @@ class AddUserDialog {
           children: <Widget>[
             getTextField("Name", teName),
             new GestureDetector(
-              onTap: () => onTap(_myHomePageState, context),
+              onTap: () {
+                databaseReference
+                    .child('chauffeur')
+                    .child("cha1")
+                    .update({nameDB: teName.text});
+                Navigator.of(context).pop();
+              },
               child: new Container(
                 margin: EdgeInsets.fromLTRB(10.0, 0.0, 10.0, 0.0),
-                child: getAppBorderButton("Edit",
-                    EdgeInsets.fromLTRB(0.0, 10.0, 0.0, 0.0)),
+                child: getAppBorderButton(
+                    "Edit", EdgeInsets.fromLTRB(0.0, 10.0, 0.0, 0.0)),
               ),
             ),
           ],
@@ -84,12 +94,7 @@ class AddUserDialog {
     return new Chauffeur(teName.text);
   }
 
-  onTap( AddUserCallback _myHomePageState, BuildContext context) {
-    
-      _myHomePageState.update(getData());
-      Navigator.of(context).pop();
-    
-  }
+  onTap(AddUserCallback _myHomePageState, BuildContext context) {}
 }
 
 abstract class AddUserCallback {
