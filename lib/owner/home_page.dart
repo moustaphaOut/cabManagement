@@ -1,7 +1,10 @@
+import 'dart:async';
+import 'package:intl/intl.dart';
+
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
-import 'package:date_format/date_format.dart';
-import 'package:gestion_taxi/login_page.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../widgets/info_card.dart';
 import './profile_page.dart';
@@ -16,57 +19,54 @@ class HomeOwner extends StatefulWidget {
 }
 
 class _HomeOwner extends State<HomeOwner> {
-  var now = formatDate(DateTime(2019, 07, 25), [dd, '-', mm, '-', yyyy]);
-
-  List _cities = [
-    "--Select Taxi--",
-    "Dacia 2018",
-    "Dacia 2016",
-    "Mercedes 2012",
+  List vehicules = [
+    "Moustapha",
+    "Hassan",
   ];
   List<DropdownMenuItem<String>> _dropDownMenuItems;
-  String _currentCity;
-  List<DropdownMenuItem<String>> getDropDownMenuItems() {
-    List<DropdownMenuItem<String>> items = new List();
-    for (String city in _cities) {
-      items.add(new DropdownMenuItem(value: city, child: new Text(city)));
-    }
-    return items;
-  }
+  String _currentVehicule;
+
+  String _consommation_jour = "",
+      _depense_jour = "",
+      _recette_jour = "",
+      _nombre_client = "",
+      _km_parcouru = "",
+      _heure_travaille = "";
+  StreamSubscription _subscriptionTodo;
 
   @override
   void initState() {
-    _dropDownMenuItems = getDropDownMenuItems();
-    _currentCity = _dropDownMenuItems[0].value;
+    initVehicules();
+
+    FirebaseTodos.getDetailsJournalier(_currentVehicule, pickedDate, _updateDetailsJournalier)
+        .then((StreamSubscription s) => _subscriptionTodo = s);
+
     super.initState();
   }
 
-  DateTime selectedDate = DateTime.now();
+  DateTime pickedDate = DateTime.now();
+
   Future<Null> _selectDate(BuildContext context) async {
+    DateTime selectedDate = DateTime.now();
     final DateTime picked = await showDatePicker(
         context: context,
-        initialDate: selectedDate,
-        firstDate: DateTime(2015, 8),
-        lastDate: DateTime(2101));
+        initialDate: pickedDate,
+        firstDate: DateTime(2019, 08, 27),
+        lastDate: selectedDate);
     if (picked != null && picked != selectedDate)
       setState(() {
-        selectedDate = picked;
+        pickedDate = picked;
+        FirebaseTodos.getDetailsJournalier(_currentVehicule, picked, _updateDetailsJournalier)
+            .then((StreamSubscription s) => _subscriptionTodo = s);
       });
   }
 
+  final databaseReference = FirebaseDatabase.instance.reference();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Color.fromRGBO(255, 0, 0, 0.7),
-        leading: IconButton(
-          icon: Icon(
-            Icons.outlined_flag,
-          ),
-          onPressed: () {
-            Navigator.of(context).pushNamed(LoginPage.tag);
-          },
-        ),
         title: Text('Home'),
         actions: <Widget>[
           new IconButton(
@@ -118,57 +118,43 @@ class _HomeOwner extends State<HomeOwner> {
               alignment: Alignment.topCenter,
               decoration: BoxDecoration(),
               child: Column(children: [
-                new Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: <Widget>[
-                    new Text(
-                      "Today",
-                      style: TextStyle(
-                          fontSize: 15.0, fontWeight: FontWeight.w800),
-                    ),
-                    new Text(
-                      '$now',
-                      style: TextStyle(fontSize: 15.0),
-                    ),
-                  ],
-                ),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: <Widget>[
                     //Text("${selectedDate.toLocal()}"),
                     DropdownButton(
-                      value: _currentCity,
+                      value: _currentVehicule,
                       items: _dropDownMenuItems,
                       onChanged: changedDropDownItem,
                     ),
                     RaisedButton(
                       onPressed: () => _selectDate(context),
-                      child: Text('Select date'),
+                      child: Text(formatDate('dd-MM-yyyy', pickedDate)),
                     ),
                   ],
                 ),
                 InfoCard(
                   vertical: 0.0,
-                  text: '300 DH',
+                  text: _recette_jour + ' DH',
                   icon: Icons.attach_money,
                   colorText: Colors.teal,
                 ),
                 InfoCard(
                   vertical: 0.0,
-                  text: '10 km',
+                  text: _km_parcouru + ' KM',
                   icon: Icons.directions_car,
                   colorText: Colors.teal,
                 ),
                 InfoCard(
                   vertical: 0.0,
-                  text: '12',
+                  text: _nombre_client,
                   icon: Icons.people,
                   colorText: Colors.teal,
                 ),
                 InfoCard(
                   vertical: 0.0,
-                  text: '8 H',
+                  text: _heure_travaille + ' H',
                   icon: Icons.timelapse,
                   colorText: Colors.teal,
                 ),
@@ -195,9 +181,9 @@ class _HomeOwner extends State<HomeOwner> {
         ],
         onTap: (currentIndex) {
           if (currentIndex == 2)
-            Navigator.of(context).pushNamed(ProfileOwner.tag);
+            Navigator.of(context).pushNamedAndRemoveUntil(ProfileOwner.tag,(Route<dynamic> route) => false);
           else if (currentIndex == 1)
-            Navigator.of(context).pushNamed(TrafficOwner2.tag);
+            Navigator.of(context).pushNamedAndRemoveUntil(TrafficOwner2.tag,(Route<dynamic> route) => false);
           //Navigator.of(context).pushNamed(Profile.tag);
         },
         selectedItemColor: Colors.amber[800],
@@ -207,8 +193,40 @@ class _HomeOwner extends State<HomeOwner> {
 
   void changedDropDownItem(String selectedCity) {
     setState(() {
-      _currentCity = selectedCity;
+      _currentVehicule = selectedCity;
+       FirebaseTodos.getDetailsJournalier(_currentVehicule, pickedDate, _updateDetailsJournalier)
+            .then((StreamSubscription s) => _subscriptionTodo = s);
     });
+  }
+
+  void initVehicules() {
+    var ref = FirebaseDatabase.instance
+        .reference()
+        .child("proprietaire")
+        .child("21YOLwa4ITRAdUNy824AfkHBRZ23")
+        .child("agreement");
+    ref.orderByKey().once().then((onValue) {
+      Map<dynamic, dynamic> map = onValue.value;
+      //print(map.keys);
+      print("------------1----------------");
+      
+      setState(() {
+        vehicules.add(map.values.toList()[0]["vehicule"]["num_immatriculation"]);
+        vehicules.add(map.values.toList()[1]["vehicule"]["num_immatriculation"]);
+      });
+      print("------------2----------------");
+    });
+
+    List<DropdownMenuItem<String>> getDropDownMenuItems() {
+      List<DropdownMenuItem<String>> items = new List();
+      for (String vehicule in vehicules) {
+        items.add(
+            new DropdownMenuItem(value: vehicule, child: new Text(vehicule)));
+      }
+      return items;
+    }
+    _dropDownMenuItems = getDropDownMenuItems();
+    _currentVehicule = _dropDownMenuItems[0].value;
   }
 
   // Alert with single button.
@@ -229,4 +247,132 @@ class _HomeOwner extends State<HomeOwner> {
       ],
     ).show();
   }
+
+  _updateDetailsJournalier(DetailsJournalier value) {
+    setState(() {
+      _consommation_jour = value.consommation_jour;
+      _depense_jour = value.depense_jour;
+      _recette_jour = value.recette_jour;
+      _nombre_client = value.nombre_client;
+      _km_parcouru = value.km_parcouru;
+      _heure_travaille = value.heure_travaille;
+    });
+  }
+
+  String getCurrentDate(String format) {
+    var now = new DateTime.now();
+    var formatter = new DateFormat(format);
+    return formatter.format(now);
+  }
+
+  String formatDate(String format, DateTime x) {
+    var formatter = new DateFormat(format);
+    return formatter.format(x);
+  }
 }
+
+class DetailsJournalier {
+  final String key;
+  String consommation_jour = '0',
+      depense_jour = '0',
+      recette_jour = '0',
+      nombre_client = '0',
+      km_parcouru = '0',
+      heure_travaille = '0';
+  DetailsJournalier.fromJson(this.key, Map data) {
+    if (data != null) {
+      consommation_jour =
+          (data['consommation_jour'] == null ? '' : data['consommation_jour']);
+      depense_jour = (data['depense_jour'] == null ? '' : data['depense_jour']);
+      recette_jour = (data['recette_jour'] == null ? '' : data['recette_jour']);
+      nombre_client =
+          (data['nombre_client'] == null ? '' : data['nombre_client']);
+      km_parcouru = (data['km_parcouru'] == null ? '' : data['km_parcouru']);
+      heure_travaille =
+          (data['heure_travaille'] == null ? '' : data['heure_travaille']);
+    }
+  }
+}
+
+class FirebaseTodos {
+  static Future<StreamSubscription<Event>> getDetailsJournalier(String _currentVehicule,
+      DateTime filterDate, void onData(DetailsJournalier todo)) async {
+    String accountKey = await Preferences.getAccountKey();
+    StreamSubscription<Event> subscription = FirebaseDatabase.instance
+        .reference()
+        .child("proprietaire")
+        .child(accountKey)
+        .child("agreement")
+        .child("agr1")
+        .child("vehicule")
+        .child("chauffeur")
+        .child(_currentVehicule) //.child(await getCurrentUid())
+        .child("details_journalier")
+        .child(_HomeOwner().formatDate('dd_MM_yyyy', filterDate))
+        .onValue
+        .listen((Event event) {
+      var todo = new DetailsJournalier.fromJson(
+          event.snapshot.key, event.snapshot.value);
+
+      onData(todo);
+    });
+
+    return subscription;
+  }
+}
+
+class Preferences {
+  static const String ACCOUNT_KEY = "accountKey";
+
+  static Future<bool> setAccountKey(String accountKey) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString(ACCOUNT_KEY, accountKey);
+    return prefs.commit();
+  }
+
+  static Future<String> getAccountKey() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String accountKey = prefs.getString(ACCOUNT_KEY);
+    // workaround - simulate a login setting this
+    if (accountKey == null) {
+      accountKey = "21YOLwa4ITRAdUNy824AfkHBRZ23";
+    }
+
+    return accountKey;
+  }
+}
+
+//-----------------------QUERY------------------------------
+/*
+//-------------select * from proprietaire where nom_proprietaire='med';
+var ref = FirebaseDatabase.instance.reference().child("proprietaire");
+    ref.orderByChild("nom_proprietaire").equalTo('med').once().then((snap) {
+      print(snap.value);
+    });
+*/
+//----------------------- END ------------------------------
+/* map.forEach((key, values) {
+        ref.child(key).child("vehicule").once().then((onValue2) {
+          print(onValue2.value['num_immatriculation']);
+          vehicules.add(onValue2.value['num_immatriculation']);
+        });
+      //});*/
+/*
+var ref = FirebaseDatabase.instance.reference().child("proprietaire").child("21YOLwa4ITRAdUNy824AfkHBRZ23").child("agreement");
+    ref.orderByKey().once().then((onValue) {
+      Map<dynamic, dynamic> map = onValue.value;
+          print("----------------------------");
+
+        map.forEach((key,values) {
+          print("key: "+key);
+          ref.child(key).child("vehicule").once().then((onValue2) {
+            Map<dynamic, dynamic> map2 = onValue2.value;
+            map2.forEach((key2,values2) {
+              print("value: "+values2['num_immatriculation']);
+            });
+          });
+        });
+          print("----------------------------");
+
+    });
+*/

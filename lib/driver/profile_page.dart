@@ -1,11 +1,12 @@
+import 'dart:async';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:firebase_database/ui/firebase_animated_list.dart';
 import 'package:flutter/material.dart';
-import '../database/firebase_database_util.dart';
-import '../add_user_dialog.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import '../update_field_dialog.dart';
 import '../widgets/info_card.dart';
-import '../model/chauffeur.dart';
+import '../login_page.dart';
 
 const photo = 'assets/alucard.jpg';
 const job = 'Driver';
@@ -19,190 +20,204 @@ class ProfileDriver extends StatefulWidget {
   }
 }
 
-class _ProfileDriver extends State<ProfileDriver>  implements AddUserCallback{
-  bool _anchorToBottom = false;
-  FirebaseDatabaseUtil databaseUtil;
-
-  @override
+class _ProfileDriver extends State<ProfileDriver> {
+  String _cin_chauffeur = "",
+      _email_chauffeur = "",
+      _nom_chauffeur = "",
+      _prenom_chauffeur = "",
+      _telephone_chauffeur = "",
+      _date_naissance_chauffeur = "";
+  StreamSubscription _subscriptionTodo;
+ @override
   void initState() {
-    super.initState();
-    databaseUtil = new FirebaseDatabaseUtil('chauffeur');
-    databaseUtil.initState();
+    //FirebaseTodos.getTodo("-KriJ8Sg4lWIoNswKWc4").then(_updateTodo);
+    FirebaseTodos.getProprietaire(_updateChauffeur)
+        .then((StreamSubscription s) => _subscriptionTodo = s);
   }
-
-  @override
-  void dispose() {
-    super.dispose();
-    databaseUtil.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
-    Widget _buildTitle(BuildContext context) {
-      return new InkWell(
-        child: new Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12.0),
-          child: new Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Color.fromRGBO(255, 0, 0, 0.7),
+        title: Text('Profile'),
+        actions: <Widget>[
+              new IconButton(
+                icon: new Icon(Icons.outlined_flag),
+                onPressed: () => _signOut(),
+              ),
+            ],
+      ),
+      body: Container(
+        child: Center(
+          child: ListView(
+            padding: const EdgeInsets.all(20.0),
             children: <Widget>[
-              new Text(
-                'Profile',
-                style: new TextStyle(
-                  fontWeight: FontWeight.bold,
+              CircleAvatar(
+                radius: 30,
+                backgroundImage: AssetImage(photo),
+              ),
+              Text(
+                _prenom_chauffeur + " " + _nom_chauffeur,
+                style: TextStyle(
+                  fontSize: 20.0,
                   color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Pacifico',
                 ),
+              ),
+              Text(
+                job,
+                style: TextStyle(
+                  fontFamily: 'Source Sans Pro',
+                  fontSize: 10.0,
+                  color: Colors.teal[50],
+                  letterSpacing: 2.5,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(
+                height: 20,
+                width: 200,
+                child: Divider(
+                  color: Colors.teal.shade700,
+                ),
+              ),
+              InfoCard(
+                text: _cin_chauffeur,
+                icon: Icons.web,
+                colorText: Colors.teal,
+                onPressed: () {},
+              ),
+              InfoCard(
+                text: _telephone_chauffeur,
+                icon: Icons.phone,
+                colorText: Colors.teal,
+                onPressed: () {},
+              ),
+              InfoCard(
+                text: _email_chauffeur,
+                icon: Icons.email,
+                colorText: Colors.teal,
+                onPressed: () {},
+              ),
+              InfoCard(
+                text: _date_naissance_chauffeur,
+                colorText: Colors.teal,
+                icon: Icons.calendar_today,
+                onPressed: () => showEditWidget(
+                     _date_naissance_chauffeur, "date_naissance_chauffeur"),
               ),
             ],
           ),
         ),
-      );
-    }
-
-    /*List<Widget> _buildActions() {
-      return <Widget>[
-        new IconButton(
-          icon: const Icon(
-            Icons.group_add,
-            color: Colors.white,
-          ),
-          onPressed: () {},
-        ),
-      ];
-    }*/
-
-    return new Scaffold(
-      appBar: new AppBar(
-        backgroundColor: Color.fromRGBO(255, 0, 0, 0.7),
-        title: _buildTitle(context),
-        //actions: _buildActions(),
       ),
-      body: new FirebaseAnimatedList(
-        key: new ValueKey<bool>(_anchorToBottom),
-        query: databaseUtil.getUser(),
-        reverse: _anchorToBottom,
-        sort: _anchorToBottom
-            ? (DataSnapshot a, DataSnapshot b) => b.key.compareTo(a.key)
-            : null,
-        itemBuilder: (BuildContext context, DataSnapshot snapshot,
-            Animation<double> animation, int index) {
-          return new SizeTransition(
-            sizeFactor: animation,
-            child: showUser(snapshot),
-          );
-        },
-      ),
+       backgroundColor: Colors.teal[200],
     );
   }
-
-  @override
-  void update(Chauffeur user) {
-    setState(() {
-      databaseUtil.updateUser(user);
-    });
+  Future<void> _signOut() async {
+    await FirebaseAuth.instance.signOut();
+    Navigator.of(context).pushNamedAndRemoveUntil(LoginPage.tag,(Route<dynamic> route) => false);
   }
-
-  Widget showUser(DataSnapshot res) {
-    Chauffeur user = Chauffeur.fromSnapshot(res);
-
-    var item = new Container(
-      child: new Column(
-        //crossAxisAlignment: CrossAxisAlignment.center,
-        children: <Widget>[
-          CircleAvatar(
-            radius: 30,
-            backgroundImage: AssetImage(user.photoChauffeur),
-          ),
-          Text(
-            user.nomChauffeur + " " + user.prenomChauffeur,
-            style: TextStyle(
-              fontSize: 20.0,
-              color: Colors.green,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Pacifico',
-            ),
-          ),
-          Text(
-            job,
-            style: TextStyle(
-              fontFamily: 'Source Sans Pro',
-              fontSize: 15.0,
-              color: Colors.red,
-              letterSpacing: 2.5,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          SizedBox(
-            height: 20,
-            width: 200,
-            child: Divider(
-              color: Colors.teal.shade700,
-            ),
-          ),
-          InfoCard(
-            text: user.telephoneChauffeur,
-            icon: Icons.phone,
-            colorText: Colors.teal,
-            onPressed: () => showEditWidget(user, true, user.telephoneChauffeur, "telephoneChauffeur"),
-          ),
-          InfoCard(
-            text: user.emailChauffeur,
-            icon: Icons.email,
-            colorText: Colors.teal,
-            onPressed: () => showEditWidget(user, true, user.emailChauffeur, "emailChauffeur"),
-          ),
-          InfoCard(
-            text: user.horaireTravail,
-            icon: Icons.web,
-            colorText: Colors.teal,
-            onPressed: () {},
-          ),
-          InfoCard(
-            text: city,
-            colorText: Colors.teal,
-            icon: Icons.location_city,
-          ),
-          InfoCard(
-            text: user.nomUtilisateurChauffeur,
-            colorText: Colors.teal,
-            icon: Icons.alternate_email,
-          ),
-          InfoCard(
-            text: user.dateNaissanceChauffeur,
-            colorText: Colors.teal,
-            icon: Icons.calendar_today,
-            onPressed: () => showEditWidget(user, true, user.dateNaissanceChauffeur, "dateNaissanceChauffeur"),
-          ),
-        ],
-      ),
-    );
-
-    return item;
-  }
-
- /* String getShortName(Chauffeur user) {
-    String shortName = "";
-    if (user.nomChauffeur.isNotEmpty) {
-      shortName = user.nomChauffeur.substring(0, 1);
-    }
-    return shortName;
-}*/
-
-  showEditWidget(Chauffeur user, bool isEdit,String data, String nameDB) {
-     showDialog(
+Future<String> getCurrentEmail() async {
+  FirebaseUser user = await FirebaseAuth.instance.currentUser();
+  return user.email;
+}
+ Future<String> getCurrentUid() async {
+  FirebaseUser user = await FirebaseAuth.instance.currentUser();
+  String uid = user.uid;
+  return uid;
+}
+  showEditWidget( String currentData, String attributeName) {
+    showDialog(
       context: context,
       builder: (BuildContext context) =>
-          new AddUserDialog(data).buildAboutDialog(context, this, user, nameDB),
+          new UpdateFieldDialog().buildAboutDialog(context, attributeName, currentData),
     );
   }
 
-  deleteUser(Chauffeur user) {
+  _updateChauffeur(TodoChauffeur value) {
     setState(() {
-      databaseUtil.deleteUser(user);
+      _cin_chauffeur = value.cin_chauffeur;
+      _email_chauffeur = value.email_chauffeur;
+      _nom_chauffeur = value.nom_chauffeur;
+      _prenom_chauffeur = value.prenom_chauffeur;
+      _telephone_chauffeur = value.telephone_chauffeur;
+      _date_naissance_chauffeur = value.date_naissance_chauffeur;
     });
   }
+}
 
-  @override
-  void addUser(Chauffeur user) {
-    // TODO: implement addUser
+class TodoChauffeur {
+  final String key;
+  String cin_chauffeur,
+      email_chauffeur,
+      nom_chauffeur,
+      prenom_chauffeur,
+      telephone_chauffeur,
+      date_naissance_chauffeur;
+  TodoChauffeur.fromJson(this.key, Map data) {
+    cin_chauffeur =
+        (data['cin_chauffeur'] == null ? '' : data['cin_chauffeur']);
+    email_chauffeur =
+        (data['email_chauffeur'] == null ? '' : data['email_chauffeur']);
+    nom_chauffeur =
+        (data['nom_chauffeur'] == null ? '' : data['nom_chauffeur']);
+    prenom_chauffeur = (data['prenom_chauffeur'] == null
+        ? ''
+        : data['prenom_chauffeur']);
+    telephone_chauffeur = (data['telephone_chauffeur'] == null
+        ? ''
+        : data['telephone_chauffeur']);
+    date_naissance_chauffeur = (data['date_naissance_chauffeur'] == null
+        ? ''
+        : data['date_naissance_chauffeur']);
+  }
+}
+
+class FirebaseTodos {
+  /// FirebaseTodos.getTodoStream("-KriJ8Sg4lWIoNswKWc4", _updateTodo)
+  /// .then((StreamSubscription s) => _subscriptionTodo = s);
+  static Future<StreamSubscription<Event>> getProprietaire(
+      void onData(TodoChauffeur todo)) async {
+    String accountKey = await Preferences.getAccountKey();
+
+    StreamSubscription<Event> subscription = FirebaseDatabase.instance
+        .reference()
+        .child("proprietaire")
+        .child(accountKey)
+        .child("agreement")
+        .child("agr1")
+        .child("vehicule")
+        .child("chauffeur")
+        .child("cha1")//.child(await getCurrentUid())
+        .onValue
+        .listen((Event event) {
+      var todo = new TodoChauffeur.fromJson(
+          event.snapshot.key, event.snapshot.value);
+      onData(todo);
+    });
+
+    return subscription;
+  }
+}
+
+class Preferences {
+  static const String ACCOUNT_KEY = "accountKey";
+
+  static Future<bool> setAccountKey(String accountKey) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString(ACCOUNT_KEY, accountKey);
+    return prefs.commit();
+  }
+
+  static Future<String> getAccountKey() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String accountKey = prefs.getString(ACCOUNT_KEY);
+    // workaround - simulate a login setting this
+    if (accountKey == null) {
+      accountKey = "21YOLwa4ITRAdUNy824AfkHBRZ23";
+    }
+
+    return accountKey;
   }
 }

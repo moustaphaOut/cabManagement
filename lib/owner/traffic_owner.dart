@@ -314,10 +314,9 @@ class _TrafficOwner2 extends State<TrafficOwner2> {
         ],
         onTap: (currentIndex) {
           if (currentIndex == 2)
-            Navigator.of(context).pushNamed(ProfileOwner.tag);
+            Navigator.of(context).pushNamedAndRemoveUntil(ProfileOwner.tag,(Route<dynamic> route) => false);
           else if (currentIndex == 0)
-            Navigator.of(context).pushNamed(HomeOwner.tag);
-          //Navigator.of(context).pushNamed(Profile.tag);
+            Navigator.of(context).pushNamedAndRemoveUntil(HomeOwner.tag,(Route<dynamic> route) => false);
         },
         selectedItemColor: Colors.amber[800],
       ),

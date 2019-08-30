@@ -2,13 +2,14 @@ import 'dart:async';
 
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:gestion_taxi/login_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import './home_page.dart';
 import '../widgets/info_card.dart';
 import '../model/proprietaire.dart';
-import './traffic_page.dart';
+import './traffic_owner.dart';
 
 const photo = 'assets/alucard.jpg';
 const rating = 3;
@@ -26,22 +27,34 @@ class ProfileOwner extends StatefulWidget {
 
 class _ProfileOwner extends State<ProfileOwner> {
   static String tag = 'profile-owner';
-
-  
-  //final databaseReference = FirebaseDatabase.instance.reference();
+  Map<String, String> _agreements = {"hola": "test"};
+  Map<String, String> _vehicules = {"0": "0"};
+  List<DropdownMenuItem<String>> _dropDownMenuItems;
+  List<DropdownMenuItem<String>> _dropDownMenuItemsVehicule;
+  String _currentAgreement, _currentKeyAgreement;
+  String _currentVehicule, _currentKeyVehicule;
   StreamSubscription _subscriptionTodo;
 
-  String _cin_proprietaire = "", _email_proprietaire ="",_nom_proprietaire = "",_prenom_proprietaire ="";
-  String _num_agreement = "", _duree_agreement ="",_date_agreement = "",_copie_agreemen ="";
-  String _num_immatriculation = "", _marque_vehicule ="",_modele_vehicule = "",_annee_modele_vehicule ="",_telephone_proprietaire ="",_date_naissance_proprietaire ="";
+  String _cin_proprietaire = "",
+      _email_proprietaire = "",
+      _nom_proprietaire = "",
+      _prenom_proprietaire = "";
+  String _num_agreement = "",
+      _duree_agreement = "",
+      _date_agreement = "",
+      _copie_agreemen = "";
+  String _num_immatriculation = "",
+      _marque_vehicule = "",
+      _modele_vehicule = "",
+      _annee_modele_vehicule = "",
+      _telephone_proprietaire = "",
+      _date_naissance_proprietaire = "";
   @override
   void initState() {
-    //FirebaseTodos.getTodo("-KriJ8Sg4lWIoNswKWc4").then(_updateTodo);
+    FirebaseTodos.getItems(_agreements, _updateItems)
+        .then((StreamSubscription s) => _subscriptionTodo = s);
+
     FirebaseTodos.getProprietaire(_updateProprietaire)
-        .then((StreamSubscription s) => _subscriptionTodo = s);
-    FirebaseTodos.getAgreement("agr1", _updateAgreement)
-        .then((StreamSubscription s) => _subscriptionTodo = s);
-    FirebaseTodos.getVehicule("agr1", _updateVehicule)
         .then((StreamSubscription s) => _subscriptionTodo = s);
     super.initState();
   }
@@ -53,7 +66,8 @@ class _ProfileOwner extends State<ProfileOwner> {
     }
     super.dispose();
   }
-@override
+
+  @override
   Widget build(BuildContext context) {
     //getCurrentEmail();
     return MaterialApp(
@@ -71,7 +85,13 @@ class _ProfileOwner extends State<ProfileOwner> {
                 Tab(text: "Vehicule"),
               ],
             ),
-            title:  Text('Information personnel'),
+            title: Text('Information personnel'),
+            actions: <Widget>[
+              new IconButton(
+                icon: new Icon(Icons.outlined_flag),
+                onPressed: () => _signOut(),
+              ),
+            ],
           ),
           body: TabBarView(
             children: [
@@ -87,7 +107,7 @@ class _ProfileOwner extends State<ProfileOwner> {
                           backgroundImage: AssetImage(photo),
                         ),
                         Text(
-                          _prenom_proprietaire+" "+_nom_proprietaire,
+                          _prenom_proprietaire + " " + _nom_proprietaire,
                           style: TextStyle(
                             fontSize: 20.0,
                             color: Colors.white,
@@ -157,14 +177,10 @@ class _ProfileOwner extends State<ProfileOwner> {
                     child: ListView(
                       padding: const EdgeInsets.all(20.0),
                       children: <Widget>[
-                        Text(
-                          "Agreement",
-                          style: TextStyle(
-                            fontSize: 20.0,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'Pacifico',
-                          ),
+                        DropdownButton(
+                          value: _currentAgreement,
+                          items: _dropDownMenuItems,
+                          onChanged: changedDropDownItem,
                         ),
                         SizedBox(
                           height: 20,
@@ -208,14 +224,10 @@ class _ProfileOwner extends State<ProfileOwner> {
                     child: ListView(
                       padding: const EdgeInsets.all(20.0),
                       children: <Widget>[
-                        Text(
-                          "Vehicule",
-                          style: TextStyle(
-                            fontSize: 20.0,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'Pacifico',
-                          ),
+                        DropdownButton(
+                          value: _currentVehicule,
+                          items: _dropDownMenuItemsVehicule,
+                          onChanged: changedDropDownItemVehicule,
                         ),
                         SizedBox(
                           height: 20,
@@ -271,9 +283,11 @@ class _ProfileOwner extends State<ProfileOwner> {
             ],
             onTap: (currentIndex) {
               if (currentIndex == 0)
-                Navigator.of(context).pushNamed(HomeOwner.tag);
+                Navigator.of(context).pushNamedAndRemoveUntil(
+                    HomeOwner.tag, (Route<dynamic> route) => false);
               else if (currentIndex == 1)
-                Navigator.of(context).pushNamed(TrafficOwner.tag);
+                Navigator.of(context).pushNamedAndRemoveUntil(
+                    TrafficOwner2.tag, (Route<dynamic> route) => false);
               //Navigator.of(context).pushNamed(Profile.tag);
             },
             selectedItemColor: Colors.amber[800],
@@ -284,30 +298,91 @@ class _ProfileOwner extends State<ProfileOwner> {
     );
   }
 
- _updateProprietaire(TodoProprietaire value) {
-    setState((){
+  List<DropdownMenuItem<String>> getDropDownMenuItems(ss) {
+    List<DropdownMenuItem<String>> items = new List();
+    ss.forEach((key, values) {
+      items.add(new DropdownMenuItem(
+          value: values, child: new Text(values), key: Key(key)));
+    });
+    return items;
+  }
+
+  void changedDropDownItem(String selectedAgreement) {
+    setState(() {
+      _currentAgreement = selectedAgreement;
+      _currentKeyAgreement = _currentKeyAgreement = _agreements.keys.firstWhere(
+          (k) => _agreements[k] == _currentAgreement,
+          orElse: () => null);
+      print(_currentKeyAgreement);
+      FirebaseTodos.getAgreement(_currentKeyAgreement, _updateAgreement)
+          .then((StreamSubscription s) => _subscriptionTodo = s);
+    });
+  }
+
+  void changedDropDownItemVehicule(String selectedVehicule) {
+    setState(() {
+      _currentVehicule = selectedVehicule;
+      _currentKeyVehicule = _currentKeyVehicule = _vehicules.keys.firstWhere(
+          (k) => _vehicules[k] == _currentVehicule,
+          orElse: () => null);
+      FirebaseTodos.getVehicule(_currentKeyVehicule, _updateVehicule)
+          .then((StreamSubscription s) => _subscriptionTodo = s);
+    });
+  }
+  Future<void> _signOut() async {
+    await FirebaseAuth.instance.signOut();
+    Navigator.of(context).pushNamedAndRemoveUntil(
+        LoginPage.tag, (Route<dynamic> route) => false);
+  }
+
+  _updateProprietaire(TodoProprietaire value) {
+    setState(() {
       _cin_proprietaire = value.cin_proprietaire;
       _email_proprietaire = value.email_proprietaire;
       _nom_proprietaire = value.nom_proprietaire;
       _prenom_proprietaire = value.prenom_proprietaire;
-     _telephone_proprietaire = value.telephone_proprietaire;
-     _date_naissance_proprietaire = value.date_naissance_proprietaire;
+      _telephone_proprietaire = value.telephone_proprietaire;
+      _date_naissance_proprietaire = value.date_naissance_proprietaire;
     });
   }
+
   _updateAgreement(TodoAgreement value) {
-    setState((){
+    setState(() {
       _num_agreement = value.num_agreement;
       _date_agreement = value.date_agreement;
       _duree_agreement = value.duree_agreement;
       _copie_agreemen = value.copie_agreemen;
     });
   }
-    _updateVehicule(TodoVehicule value) {
-    setState((){
+
+  _updateVehicule(TodoVehicule value) {
+    setState(() {
       _num_immatriculation = value.num_immatriculation;
       _marque_vehicule = value.marque_vehicule;
       _modele_vehicule = value.modele_vehicule;
       _annee_modele_vehicule = value.annee_modele_vehicule;
+    });
+  }
+
+  _updateItems(TodoItems value) {
+    setState(() {
+      _agreements = value.agremments;
+      _dropDownMenuItems = getDropDownMenuItems(_agreements);
+      _currentAgreement = _dropDownMenuItems[0].value;
+      _currentKeyAgreement = _agreements.keys.firstWhere(
+          (k) => _agreements[k] == _currentAgreement,
+          orElse: () => null);
+     FirebaseTodos.getAgreement(_currentKeyAgreement, _updateAgreement)
+        .then((StreamSubscription s) => _subscriptionTodo = s);
+
+         _vehicules = value.vehicules;
+      _dropDownMenuItemsVehicule = getDropDownMenuItems(_vehicules);
+      _currentVehicule = _dropDownMenuItemsVehicule[0].value;
+      _currentKeyVehicule = _vehicules.keys.firstWhere(
+          (k) => _vehicules[k] == _currentVehicule,
+          orElse: () => null);
+    FirebaseTodos.getVehicule(_currentKeyVehicule, _updateVehicule)
+        .then((StreamSubscription s) => _subscriptionTodo = s);
     });
   }
 }
@@ -316,54 +391,114 @@ Future<String> getCurrentEmail() async {
   FirebaseUser user = await FirebaseAuth.instance.currentUser();
   return user.email;
 }
- Future<String> getCurrentUid() async {
+
+Future<String> getCurrentUid() async {
   FirebaseUser user = await FirebaseAuth.instance.currentUser();
   String uid = user.uid;
-  print("-------------------rrrrr");
-  print(uid);
-  print("----------------/---------------------");
   return uid;
 }
+
 class TodoProprietaire {
   final String key;
-  String cin_proprietaire,email_proprietaire,nom_proprietaire,prenom_proprietaire,telephone_proprietaire,date_naissance_proprietaire;
+  String cin_proprietaire,
+      email_proprietaire,
+      nom_proprietaire,
+      prenom_proprietaire,
+      telephone_proprietaire,
+      date_naissance_proprietaire;
   TodoProprietaire.fromJson(this.key, Map data) {
-    cin_proprietaire = (data['CIN_proprietaire']== null? '': data['CIN_proprietaire']);
-    email_proprietaire = (data['email_proprietaire']== null? '': data['email_proprietaire']);
-    nom_proprietaire = (data['nom_proprietaire']== null? '': data['nom_proprietaire']);
-    prenom_proprietaire = (data['prenom_proprietaire']== null? '': data['prenom_proprietaire']);
-    telephone_proprietaire = (data['telephone_proprietaire']== null? '': data['telephone_proprietaire']);
-    date_naissance_proprietaire = (data['date_naissance_proprietaire']== null? '': data['date_naissance_proprietaire']);
+    cin_proprietaire =
+        (data['cin_proprietaire'] == null ? '' : data['cin_proprietaire']);
+    email_proprietaire =
+        (data['email_proprietaire'] == null ? '' : data['email_proprietaire']);
+    nom_proprietaire =
+        (data['nom_proprietaire'] == null ? '' : data['nom_proprietaire']);
+    prenom_proprietaire = (data['prenom_proprietaire'] == null
+        ? ''
+        : data['prenom_proprietaire']);
+    telephone_proprietaire = (data['telephone_proprietaire'] == null
+        ? ''
+        : data['telephone_proprietaire']);
+    date_naissance_proprietaire = (data['date_naissance_proprietaire'] == null
+        ? ''
+        : data['date_naissance_proprietaire']);
   }
 }
 
 class TodoAgreement {
   final String key;
-  String num_agreement,duree_agreement,date_agreement,copie_agreemen;
+  String num_agreement, duree_agreement, date_agreement, copie_agreemen;
   TodoAgreement.fromJson(this.key, Map data) {
-    num_agreement = (data['num_agreement']== null? '': data['num_agreement']);
-    date_agreement = (data['date_agreement']== null? '': data['date_agreement']);
-    duree_agreement = (data['duree_agreement']== null? '': data['duree_agreement']);
-    copie_agreemen = (data['copie_agreement']== null? '': data['copie_agreement']);
+    num_agreement =
+        (data['num_agreement'] == null ? '' : data['num_agreement']);
+    date_agreement =
+        (data['date_agreement'] == null ? '' : data['date_agreement']);
+    duree_agreement =
+        (data['duree_agreement'] == null ? '' : data['duree_agreement']);
+    copie_agreemen =
+        (data['copie_agreement'] == null ? '' : data['copie_agreement']);
   }
 }
+
 class TodoVehicule {
   final String key;
-  String num_immatriculation,annee_modele_vehicule,marque_vehicule,modele_vehicule;
+  String num_immatriculation,
+      annee_modele_vehicule,
+      marque_vehicule,
+      modele_vehicule;
   TodoVehicule.fromJson(this.key, Map data) {
-    num_immatriculation = (data['num_immatriculation']== null? '': data['num_immatriculation']);
-    annee_modele_vehicule = (data['annee_modele_vehicule']== null? '': data['annee_modele_vehicule']);
-    marque_vehicule = (data['marque_vehicule']== null? '': data['marque_vehicule']);
-    modele_vehicule = (data['modele_vehicule']== null? '': data['modele_vehicule']);
+    num_immatriculation = (data['num_immatriculation'] == null
+        ? ''
+        : data['num_immatriculation']);
+    annee_modele_vehicule = (data['annee_modele_vehicule'] == null
+        ? ''
+        : data['annee_modele_vehicule']);
+    marque_vehicule =
+        (data['marque_vehicule'] == null ? '' : data['marque_vehicule']);
+    modele_vehicule =
+        (data['modele_vehicule'] == null ? '' : data['modele_vehicule']);
   }
 }
 
+class TodoItems {
+  final String key;
+  Map<String, String> agremments = {};
+  Map<String, String> vehicules = {};
+  TodoItems.fromJson(this.key, Map data) {
+         print( data.values.toList()[1]["vehicule"]["num_immatriculation"]);
+
+    for (int i = 0; i < data.keys.toList().length; i++)
+      agremments[data.keys.toList()[i].toString()] =
+          data.values.toList()[i]["num_agreement"];
+
+    for (int i = 0; i < data.keys.toList().length; i++)
+      vehicules[data.keys.toList()[i].toString()] =
+          data.values.toList()[i]["vehicule"]["num_immatriculation"];
 
 
+  }
+}
 
 class FirebaseTodos {
-  /// FirebaseTodos.getTodoStream("-KriJ8Sg4lWIoNswKWc4", _updateTodo)
-  /// .then((StreamSubscription s) => _subscriptionTodo = s);
+  static Future<StreamSubscription<Event>> getItems(
+      Map agreements, void onData(TodoItems todo)) async {
+    String accountKey = await Preferences.getAccountKey();
+    StreamSubscription<Event> subscription = FirebaseDatabase.instance
+        .reference()
+        .child("proprietaire")
+        .child(accountKey)
+        .child("agreement")
+        .orderByKey()
+        .onValue
+        .listen((Event event) {
+      var todo =
+          new TodoItems.fromJson(event.snapshot.key, event.snapshot.value);
+      onData(todo);
+    });
+
+    return subscription;
+  }
+
   static Future<StreamSubscription<Event>> getProprietaire(
       void onData(TodoProprietaire todo)) async {
     String accountKey = await Preferences.getAccountKey();
@@ -374,78 +509,58 @@ class FirebaseTodos {
         .child(accountKey)
         .onValue
         .listen((Event event) {
-      var todo = new TodoProprietaire.fromJson(event.snapshot.key, event.snapshot.value);
+      var todo = new TodoProprietaire.fromJson(
+          event.snapshot.key, event.snapshot.value);
       onData(todo);
     });
 
     return subscription;
   }
 
-  static Future<StreamSubscription<Event>> getAgreement(String todoKey,
-      void onData(TodoAgreement todo)) async {
+  static Future<StreamSubscription<Event>> getAgreement(
+      String todoKey, void onData(TodoAgreement todo)) async {
     String accountKey = await Preferences.getAccountKey();
+    if (todoKey != null) {
+      StreamSubscription<Event> subscription = FirebaseDatabase.instance
+          .reference()
+          .child("proprietaire")
+          .child(accountKey)
+          .child("agreement")
+          .child(todoKey) //todoKey
+          .onValue
+          .listen((Event event) {
+        var todo = new TodoAgreement.fromJson(
+            event.snapshot.key, event.snapshot.value);
+        onData(todo);
+      });
 
-    StreamSubscription<Event> subscription = FirebaseDatabase.instance
-        .reference()
-        .child("proprietaire")
-        .child(accountKey)
-        .child("agreement")
-        .child(todoKey)
-        .onValue
-        .listen((Event event) {
-      var todo = new TodoAgreement.fromJson(event.snapshot.key, event.snapshot.value);
-      onData(todo);
-    });
-
-    return subscription;
+      return subscription;
+    }
   }
 
-  static Future<StreamSubscription<Event>> getVehicule(String todoKey,
-      void onData(TodoVehicule todo)) async {
+  static Future<StreamSubscription<Event>> getVehicule(
+      String todoKey, void onData(TodoVehicule todo)) async {
     String accountKey = await Preferences.getAccountKey();
+    if (todoKey != null) {
+      StreamSubscription<Event> subscription = FirebaseDatabase.instance
+          .reference()
+          .child("proprietaire")
+          .child(accountKey)
+          .child("agreement")
+          .child(todoKey) //todoKey
+          .child("vehicule")
+          .onValue
+          .listen((Event event) {
+        var todo =
+            new TodoVehicule.fromJson(event.snapshot.key, event.snapshot.value);
+        onData(todo);
+      });
 
-    StreamSubscription<Event> subscription = FirebaseDatabase.instance
-        .reference()
-        .child("proprietaire")
-        .child(accountKey)
-        .child("agreement")
-        .child(todoKey)
-        .child("vehicule")
-        .onValue
-        .listen((Event event) {
-      var todo = new TodoVehicule.fromJson(event.snapshot.key, event.snapshot.value);
-      onData(todo);
-    });
-
-    return subscription;
+      return subscription;
+    }
   }
 
-  /// FirebaseTodos.getTodo("-KriJ8Sg4lWIoNswKWc4").then(_updateTodo);
-  /*static Future<Todo> getTodo(String todoKey) async {
-    Completer<Todo> completer = new Completer<Todo>();
-
-    String accountKey = await Preferences.getAccountKey();
-
-    FirebaseDatabase.instance
-        .reference()
-        .child("proprietaire")
-        .child(accountKey)
-        .child("agreement")
-        .child(todoKey)
-        .once()
-        .then((DataSnapshot snapshot) {
-      var todo = new Todo.fromJson(snapshot.key, snapshot.value);
-      completer.complete(todo);
-    });
-
-    return completer.future;
-  }*/
 }
-
-
-
-
-
 
 class Preferences {
   static const String ACCOUNT_KEY = "accountKey";

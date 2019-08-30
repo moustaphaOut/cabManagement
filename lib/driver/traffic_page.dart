@@ -1,5 +1,11 @@
+import 'dart:async';
+
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:date_format/date_format.dart';
+import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 
 import './home_page.dart';
 import './profile_page.dart';
@@ -25,22 +31,35 @@ class TrafficDriver extends StatefulWidget {
 }
 
 class _TrafficDriver extends State<TrafficDriver> {
-  var now = formatDate(DateTime(2019, 07, 25), [dd, '-', mm, '-', yyyy]);
-
-  DateTime selectedDate = DateTime.now();
-
+  DateTime pickedDate = DateTime.now();
+  
   Future<Null> _selectDate(BuildContext context) async {
+    DateTime selectedDate = DateTime.now();
     final DateTime picked = await showDatePicker(
         context: context,
-        initialDate: selectedDate,
-        firstDate: DateTime(2015, 8),
-        lastDate: DateTime(2101));
+        initialDate: pickedDate,
+        firstDate: DateTime(2019, 08,27),
+        lastDate: selectedDate);
     if (picked != null && picked != selectedDate)
       setState(() {
-        selectedDate = picked;
+        pickedDate = picked;
+       FirebaseTodos.getDetailsJournalier(picked, _updateDetailsJournalier)
+        .then((StreamSubscription s) => _subscriptionTodo = s);
       });
   }
 
+  String _consommation_jour = "",
+      _depense_jour = "",
+      _recette_jour = "",
+      _nombre_client = "",
+      _km_parcouru = "",
+      _heure_travaille = "";
+  StreamSubscription _subscriptionTodo;
+  @override
+  void initState() {
+    FirebaseTodos.getDetailsJournalier(pickedDate, _updateDetailsJournalier)
+        .then((StreamSubscription s) => _subscriptionTodo = s);
+  }
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -74,7 +93,8 @@ class _TrafficDriver extends State<TrafficDriver> {
                       height: 20.0,
                     ),
                     RaisedButton(
-                      onPressed: () => _selectDate(context),
+                      onPressed: () { _selectDate(context);
+                      },
                       child: Text('Select date'),
                     ),
                   ],
@@ -91,36 +111,36 @@ class _TrafficDriver extends State<TrafficDriver> {
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: <Widget>[
                         new Text(
-                          "Today",
+                          DateFormat('EEEE').format(pickedDate),
                           style: TextStyle(
                               fontSize: 15.0, fontWeight: FontWeight.w800),
                         ),
                         new Text(
-                          "${selectedDate.toLocal()}",
+                          formatDate('dd-MM-yyyy',pickedDate),
                           style: TextStyle(fontSize: 15.0),
                         ),
                       ]),
                   InfoCard(
                     vertical: 0.0,
-                    text: '300 DH',
+                    text: _recette_jour + ' DH',
                     icon: Icons.attach_money,
                     colorText: Colors.teal,
                   ),
                   InfoCard(
                     vertical: 0.0,
-                    text: '10 km',
+                    text: _km_parcouru + ' KM',
                     icon: Icons.directions_car,
                     colorText: Colors.teal,
                   ),
                   InfoCard(
                     vertical: 0.0,
-                    text: '12',
+                    text: _nombre_client,
                     icon: Icons.people,
                     colorText: Colors.teal,
                   ),
                   InfoCard(
                     vertical: 0.0,
-                    text: '8 H',
+                    text:  _heure_travaille + ' H',
                     icon: Icons.timelapse,
                     colorText: Colors.teal,
                   ),
@@ -146,14 +166,106 @@ class _TrafficDriver extends State<TrafficDriver> {
           ],
           onTap: (currentIndex) {
             if (currentIndex == 0)
-              Navigator.of(context).pushNamed(HomeDriver.tag);
+              Navigator.of(context).pushNamedAndRemoveUntil(HomeDriver.tag,(Route<dynamic> route) => false);
             else if (currentIndex == 2)
-              Navigator.of(context).pushNamed(ProfileDriver.tag);
+              Navigator.of(context).pushNamedAndRemoveUntil(ProfileDriver.tag,(Route<dynamic> route) => false);
             //Navigator.of(context).pushNamed(Profile.tag);
           },
           selectedItemColor: Colors.amber[300],
         ),
       ),
     );
+  }
+ 
+  _updateDetailsJournalier(DetailsJournalier value) {
+    setState(() {
+      _consommation_jour = value.consommation_jour;
+      _depense_jour = value.depense_jour;
+      _recette_jour = value.recette_jour;
+      _nombre_client = value.nombre_client;
+      _km_parcouru = value.km_parcouru;
+      _heure_travaille = value.heure_travaille;
+    });
+  }
+   String getCurrentDate(String format) {
+    var now = new DateTime.now();
+    var formatter = new DateFormat(format);
+    return formatter.format(now);
+  }
+  String formatDate(String format,DateTime x) {
+    var formatter = new DateFormat(format);
+    return formatter.format(x);
+  }
+}
+
+class DetailsJournalier {
+  final String key;
+  String consommation_jour ='0',
+      depense_jour='0',
+      recette_jour='0',
+      nombre_client='0',
+      km_parcouru='0',
+      heure_travaille='0';
+  DetailsJournalier.fromJson(this.key, Map data) {
+    if(data != null){
+      consommation_jour =
+          (data['consommation_jour'] == null ? '' : data['consommation_jour']);
+      depense_jour = (data['depense_jour'] == null ? '' : data['depense_jour']);
+      recette_jour = (data['recette_jour'] == null ? '' : data['recette_jour']);
+      nombre_client =
+          (data['nombre_client'] == null ? '' : data['nombre_client']);
+      km_parcouru = (data['km_parcouru'] == null ? '' : data['km_parcouru']);
+      heure_travaille =
+          (data['heure_travaille'] == null ? '' : data['heure_travaille']);
+    }
+  }
+ 
+}
+
+class FirebaseTodos {
+  static Future<StreamSubscription<Event>> getDetailsJournalier(DateTime filterDate,
+      void onData(DetailsJournalier todo)) async {
+    String accountKey = await Preferences.getAccountKey();
+    StreamSubscription<Event> subscription = FirebaseDatabase.instance
+        .reference()
+        .child("proprietaire")
+        .child(accountKey)
+        .child("agreement")
+        .child("agr1")
+        .child("vehicule")
+        .child("chauffeur")
+        .child("cha1") //.child(await getCurrentUid())
+        .child("details_journalier")
+        .child(_TrafficDriver().formatDate('dd_MM_yyyy',filterDate))
+        .onValue
+        .listen((Event event) {
+      var todo = new DetailsJournalier.fromJson(
+          event.snapshot.key, event.snapshot.value);
+
+      onData(todo);
+    });
+
+    return subscription;
+  }
+}
+
+class Preferences {
+  static const String ACCOUNT_KEY = "accountKey";
+
+  static Future<bool> setAccountKey(String accountKey) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString(ACCOUNT_KEY, accountKey);
+    return prefs.commit();
+  }
+
+  static Future<String> getAccountKey() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String accountKey = prefs.getString(ACCOUNT_KEY);
+    // workaround - simulate a login setting this
+    if (accountKey == null) {
+      accountKey = "21YOLwa4ITRAdUNy824AfkHBRZ23";
+    }
+
+    return accountKey;
   }
 }
