@@ -7,7 +7,6 @@ import './driver/profile_page.dart';
 import './driver/traffic_page.dart';
 import './owner/home_page.dart';
 import './owner/profile_page.dart';
-import './owner/traffic_page.dart';
 import './owner/traffic_owner.dart';
 
 void main() => runApp(MyApp());
@@ -22,7 +21,6 @@ class MyApp extends StatelessWidget {
 
     HomeOwner.tag: (context) => HomeOwner(),
     ProfileOwner.tag: (context) => ProfileOwner(),
-    TrafficOwner.tag: (context) => TrafficOwner(),
     TrafficOwner2.tag: (context) => TrafficOwner2(),
 
   };

@@ -312,6 +312,7 @@ class _TrafficOwner2 extends State<TrafficOwner2> {
             title: Text('Profile'),
           ),
         ],
+        currentIndex: 1,
         onTap: (currentIndex) {
           if (currentIndex == 2)
             Navigator.of(context).pushNamedAndRemoveUntil(ProfileOwner.tag,(Route<dynamic> route) => false);

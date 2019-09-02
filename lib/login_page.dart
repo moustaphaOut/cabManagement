@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import './driver/home_page.dart';
 import './owner/home_page.dart';
@@ -10,11 +13,19 @@ class LoginPage extends StatefulWidget {
   _LoginPageState createState() => new _LoginPageState();
 }
 
+enum authProblems {
+  UserNotFound,
+  PasswordNotValid,
+  NetworkError,
+  EmailNotValid
+}
+
 class _LoginPageState extends State<LoginPage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  String _errorLogin = '';
+  String _errorEmail = 'Provide an email';
   String _email, _password;
-  bool _success;
-  String _userEmail;
+
 //
   String phoneNumber;
   String smsCode;
@@ -60,7 +71,7 @@ class _LoginPageState extends State<LoginPage> {
                           TextFormField(
                             validator: (input) {
                               if (input.isEmpty) {
-                                return 'Provide an email';
+                                return _errorEmail;
                               }
                             },
                             decoration: InputDecoration(labelText: 'Email'),
@@ -88,11 +99,7 @@ class _LoginPageState extends State<LoginPage> {
                             alignment: Alignment.center,
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             child: Text(
-                              _success == null
-                                  ? ''
-                                  : (_success
-                                      ? 'Successfully signed in ' + _userEmail
-                                      : 'Sign in failed'),
+                              _errorLogin,
                               style: TextStyle(color: Colors.red),
                             ),
                           ),
@@ -158,23 +165,75 @@ class _LoginPageState extends State<LoginPage> {
   void _signInWithEmailAndPassword() async {
     final FirebaseAuth _auth = FirebaseAuth.instance;
     _formKey.currentState.save();
-    final FirebaseUser user = (await _auth.signInWithEmailAndPassword(
+
+    final AuthResult user = await _auth
+        .signInWithEmailAndPassword(
       email: _email,
       password: _password,
-    ))
-        .user;
+    )
+        .catchError((e) {
+      authProblems errorType;
+      if (Platform.isAndroid)
+        switch (e.message) {
+          case 'There is no user record corresponding to this identifier. The user may have been deleted.':
+            errorType = authProblems.UserNotFound;
+            setState(() {
+              _errorLogin = "User not found";
+            });
+            break;
+          case 'The password is invalid or the user does not have a password.':
+            errorType = authProblems.PasswordNotValid;
+            setState(() {
+              _errorLogin = "The password is invalid";
+            });
+            break;
+          case 'A network error (such as timeout, interrupted connection or unreachable host) has occurred.':
+            errorType = authProblems.NetworkError;
+            setState(() {
+              _errorLogin = "A network error";
+            });
+            break;
+          case 'The email address is badly formatted.':
+            errorType = authProblems.EmailNotValid;
+            setState(() {
+              _errorLogin = "Email not valid";
+            });
+            break;
+          // ...
+          default:
+            print('Case: ${e.message} is not yet implemented');
+        }
+      else if (Platform.isIOS) {
+        switch (e.code) {
+          case 'Error 17011':
+            errorType = authProblems.UserNotFound;
+            break;
+          case 'Error 17009':
+            errorType = authProblems.PasswordNotValid;
+            break;
+          case 'Error 17020':
+            errorType = authProblems.NetworkError;
+            break;
+          // ...
+          default:
+            print('Case ${e.message} is not yet implemented');
+        }
+      }
+      print('The error is $errorType');
+    });
     if (user != null) {
-      setState(() {
-        _success = true;
-        _userEmail = user.email;
-      });
-      if (user.email == 'driver@gmail.com')
-        Navigator.of(context).pushNamedAndRemoveUntil(HomeDriver.tag,(Route<dynamic> route) => false);
-      else if (user.email == 'owner@gmail.com')
-        Navigator.of(context).pushNamedAndRemoveUntil(HomeOwner.tag,(Route<dynamic> route) => false);
-    } else {
-      setState(() {
-        _success = false;
+      FirebaseUser currentUser = await FirebaseAuth.instance.currentUser();
+      var ref = FirebaseDatabase.instance
+          .reference()
+          .child("proprietaire")
+          .child(currentUser.uid);
+      ref.onValue.listen((onData) {
+        if (onData.snapshot.value != null)
+          Navigator.of(context).pushNamedAndRemoveUntil(
+              HomeOwner.tag, (Route<dynamic> route) => false);
+        else
+          Navigator.of(context).pushNamedAndRemoveUntil(
+              HomeDriver.tag, (Route<dynamic> route) => false);
       });
     }
   }
@@ -191,7 +250,7 @@ class _LoginPageState extends State<LoginPage> {
     };
 
     final PhoneVerificationCompleted phoneVerificationCompleted =
-        (AuthCredential  user) {
+        (AuthCredential user) {
       print("Success");
     };
 
@@ -230,7 +289,8 @@ class _LoginPageState extends State<LoginPage> {
                     if (user != null) {
                       print('uf:hello');
                       Navigator.of(context).pop();
-                      Navigator.of(context).pushNamedAndRemoveUntil(HomeOwner.tag,(Route<dynamic> route) => false);
+                      Navigator.of(context).pushNamedAndRemoveUntil(
+                          HomeOwner.tag, (Route<dynamic> route) => false);
                     } else {
                       print('else:hello');
                       Navigator.of(context).pop();

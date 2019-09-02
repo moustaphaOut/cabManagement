@@ -164,6 +164,7 @@ class _TrafficDriver extends State<TrafficDriver> {
               title: Text('Profile'),
             ),
           ],
+          currentIndex: 1,
           onTap: (currentIndex) {
             if (currentIndex == 0)
               Navigator.of(context).pushNamedAndRemoveUntil(HomeDriver.tag,(Route<dynamic> route) => false);
@@ -255,7 +256,7 @@ class Preferences {
   static Future<bool> setAccountKey(String accountKey) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setString(ACCOUNT_KEY, accountKey);
-    return prefs.commit();
+    return prefs.commit;
   }
 
   static Future<String> getAccountKey() async {

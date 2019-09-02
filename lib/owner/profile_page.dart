@@ -29,12 +29,20 @@ class _ProfileOwner extends State<ProfileOwner> {
   static String tag = 'profile-owner';
   Map<String, String> _agreements = {"hola": "test"};
   Map<String, String> _vehicules = {"0": "0"};
+  Map<String, String> _chauffeurs = {"0": "0"};
   List<DropdownMenuItem<String>> _dropDownMenuItems;
   List<DropdownMenuItem<String>> _dropDownMenuItemsVehicule;
+  List<DropdownMenuItem<String>> _dropDownMenuItemsChauffeur;
   String _currentAgreement, _currentKeyAgreement;
   String _currentVehicule, _currentKeyVehicule;
+  String _currentChauffeur, _currentKeyChauffeur;
   StreamSubscription _subscriptionTodo;
-
+  String _cin_chauffeur = "",
+      _email_chauffeur = "",
+      _nom_chauffeur = "",
+      _prenom_chauffeur = "",
+      _telephone_chauffeur = "",
+      _date_naissance_chauffeur = "";
   String _cin_proprietaire = "",
       _email_proprietaire = "",
       _nom_proprietaire = "",
@@ -56,6 +64,7 @@ class _ProfileOwner extends State<ProfileOwner> {
 
     FirebaseTodos.getProprietaire(_updateProprietaire)
         .then((StreamSubscription s) => _subscriptionTodo = s);
+
     super.initState();
   }
 
@@ -72,7 +81,7 @@ class _ProfileOwner extends State<ProfileOwner> {
     //getCurrentEmail();
     return MaterialApp(
       home: DefaultTabController(
-        length: 3,
+        length: 4,
         child: Scaffold(
           appBar: AppBar(
             backgroundColor: Color(0xfff00000),
@@ -83,6 +92,7 @@ class _ProfileOwner extends State<ProfileOwner> {
                 Tab(text: "Profile"),
                 Tab(text: "Agreement"),
                 Tab(text: "Vehicule"),
+                Tab(text: "Chauffeurs"),
               ],
             ),
             title: Text('Information personnel'),
@@ -264,6 +274,53 @@ class _ProfileOwner extends State<ProfileOwner> {
                   ),
                 ),
               ),
+              Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Container(
+                  child: Center(
+                    child: ListView(
+                      padding: const EdgeInsets.all(20.0),
+                      children: <Widget>[
+                        DropdownButton(
+                          value: _currentChauffeur,
+                          items: _dropDownMenuItemsChauffeur,
+                          onChanged: changedDropDownItemChauffeur,
+                        ),
+                        SizedBox(
+                          height: 20,
+                          width: 200,
+                          child: Divider(
+                            color: Colors.teal.shade700,
+                          ),
+                        ),
+                        InfoCard(
+                          text: _cin_chauffeur,
+                          icon: Icons.web,
+                          colorText: Colors.teal,
+                          onPressed: () {},
+                        ),
+                        InfoCard(
+                          text: _prenom_chauffeur + ' ' + _nom_chauffeur,
+                          icon: Icons.phone,
+                          colorText: Colors.teal,
+                          onPressed: () {},
+                        ),
+                        InfoCard(
+                          text: _telephone_chauffeur,
+                          icon: Icons.email,
+                          colorText: Colors.teal,
+                          onPressed: () {},
+                        ),
+                        InfoCard(
+                          text: _date_naissance_chauffeur,
+                          colorText: Colors.teal,
+                          icon: Icons.location_city,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
           bottomNavigationBar: BottomNavigationBar(
@@ -281,6 +338,7 @@ class _ProfileOwner extends State<ProfileOwner> {
                 title: Text('Profile'),
               ),
             ],
+            currentIndex: 2,
             onTap: (currentIndex) {
               if (currentIndex == 0)
                 Navigator.of(context).pushNamedAndRemoveUntil(
@@ -313,7 +371,6 @@ class _ProfileOwner extends State<ProfileOwner> {
       _currentKeyAgreement = _currentKeyAgreement = _agreements.keys.firstWhere(
           (k) => _agreements[k] == _currentAgreement,
           orElse: () => null);
-      print(_currentKeyAgreement);
       FirebaseTodos.getAgreement(_currentKeyAgreement, _updateAgreement)
           .then((StreamSubscription s) => _subscriptionTodo = s);
     });
@@ -329,6 +386,18 @@ class _ProfileOwner extends State<ProfileOwner> {
           .then((StreamSubscription s) => _subscriptionTodo = s);
     });
   }
+
+  void changedDropDownItemChauffeur(String selectedChauffeur) {
+    setState(() {
+      _currentChauffeur = selectedChauffeur;
+      _currentKeyChauffeur = _currentKeyChauffeur = _chauffeurs.keys.firstWhere(
+          (k) => _chauffeurs[k] == _currentChauffeur,
+          orElse: () => null);
+      FirebaseTodos.getChauffeur(_currentKeyChauffeur, _updateChauffeur)
+          .then((StreamSubscription s) => _subscriptionTodo = s);
+    });
+  }
+
   Future<void> _signOut() async {
     await FirebaseAuth.instance.signOut();
     Navigator.of(context).pushNamedAndRemoveUntil(
@@ -364,6 +433,17 @@ class _ProfileOwner extends State<ProfileOwner> {
     });
   }
 
+  _updateChauffeur(TodoChauffeur value) {
+    setState(() {
+      _cin_chauffeur = value.cin_chauffeur;
+      _email_chauffeur = value.email_chauffeur;
+      _nom_chauffeur = value.nom_chauffeur;
+      _prenom_chauffeur = value.prenom_chauffeur;
+      _telephone_chauffeur = value.telephone_chauffeur;
+      _date_naissance_chauffeur = value.date_naissance_chauffeur;
+    });
+  }
+
   _updateItems(TodoItems value) {
     setState(() {
       _agreements = value.agremments;
@@ -372,17 +452,26 @@ class _ProfileOwner extends State<ProfileOwner> {
       _currentKeyAgreement = _agreements.keys.firstWhere(
           (k) => _agreements[k] == _currentAgreement,
           orElse: () => null);
-     FirebaseTodos.getAgreement(_currentKeyAgreement, _updateAgreement)
-        .then((StreamSubscription s) => _subscriptionTodo = s);
+      FirebaseTodos.getAgreement(_currentKeyAgreement, _updateAgreement)
+          .then((StreamSubscription s) => _subscriptionTodo = s);
 
-         _vehicules = value.vehicules;
+      _vehicules = value.vehicules;
       _dropDownMenuItemsVehicule = getDropDownMenuItems(_vehicules);
       _currentVehicule = _dropDownMenuItemsVehicule[0].value;
       _currentKeyVehicule = _vehicules.keys.firstWhere(
           (k) => _vehicules[k] == _currentVehicule,
           orElse: () => null);
-    FirebaseTodos.getVehicule(_currentKeyVehicule, _updateVehicule)
-        .then((StreamSubscription s) => _subscriptionTodo = s);
+      FirebaseTodos.getVehicule(_currentKeyVehicule, _updateVehicule)
+          .then((StreamSubscription s) => _subscriptionTodo = s);
+
+      _chauffeurs = value.chauffeurs;
+      _dropDownMenuItemsChauffeur = getDropDownMenuItems(_chauffeurs);
+      _currentChauffeur = _dropDownMenuItemsChauffeur[0].value;
+      _currentKeyChauffeur = _chauffeurs.keys.firstWhere(
+          (k) => _chauffeurs[k] == _currentChauffeur,
+          orElse: () => null);
+      FirebaseTodos.getChauffeur(_currentKeyChauffeur, _updateChauffeur)
+          .then((StreamSubscription s) => _subscriptionTodo = s);
     });
   }
 }
@@ -460,22 +549,52 @@ class TodoVehicule {
   }
 }
 
+class TodoChauffeur {
+  final String key;
+  String cin_chauffeur,
+      email_chauffeur,
+      nom_chauffeur,
+      prenom_chauffeur,
+      telephone_chauffeur,
+      date_naissance_chauffeur;
+  TodoChauffeur.fromJson(this.key, Map data) {
+    cin_chauffeur =
+        (data['cin_chauffeur'] == null ? '' : data['cin_chauffeur']);
+    email_chauffeur =
+        (data['email_chauffeur'] == null ? '' : data['email_chauffeur']);
+    nom_chauffeur =
+        (data['nom_chauffeur'] == null ? '' : data['nom_chauffeur']);
+    prenom_chauffeur =
+        (data['prenom_chauffeur'] == null ? '' : data['prenom_chauffeur']);
+    telephone_chauffeur = (data['telephone_chauffeur'] == null
+        ? ''
+        : data['telephone_chauffeur']);
+    date_naissance_chauffeur = (data['date_naissance_chauffeur'] == null
+        ? ''
+        : data['date_naissance_chauffeur']);
+  }
+}
+
 class TodoItems {
   final String key;
   Map<String, String> agremments = {};
   Map<String, String> vehicules = {};
+  Map<String, String> chauffeurs = {};
   TodoItems.fromJson(this.key, Map data) {
-         print( data.values.toList()[1]["vehicule"]["num_immatriculation"]);
-
-    for (int i = 0; i < data.keys.toList().length; i++)
+    Map mapChauffeurs;
+    for (int i = 0; i < data.keys.toList().length; i++) {
       agremments[data.keys.toList()[i].toString()] =
           data.values.toList()[i]["num_agreement"];
 
-    for (int i = 0; i < data.keys.toList().length; i++)
       vehicules[data.keys.toList()[i].toString()] =
           data.values.toList()[i]["vehicule"]["num_immatriculation"];
 
-
+      mapChauffeurs = data.values.toList()[i]["vehicule"]["chauffeur"];
+      if (mapChauffeurs != null)
+        for (int j = 0; j < mapChauffeurs.keys.toList().length; j++)
+          chauffeurs[mapChauffeurs.keys.toList()[j].toString()] =
+              mapChauffeurs.values.toList()[j]["nom_chauffeur"];
+    }
   }
 }
 
@@ -560,6 +679,28 @@ class FirebaseTodos {
     }
   }
 
+  static Future<StreamSubscription<Event>> getChauffeur(
+      String currentKeyChauffer, void onData(TodoChauffeur todo)) async {
+    String accountKey = await Preferences.getAccountKey();
+
+    StreamSubscription<Event> subscription = FirebaseDatabase.instance
+        .reference()
+        .child("proprietaire")
+        .child(accountKey)
+        .child("agreement")
+        .child("agr1")
+        .child("vehicule")
+        .child("chauffeur")
+        .child(currentKeyChauffer)
+        .onValue
+        .listen((Event event) {
+      var todo =
+          new TodoChauffeur.fromJson(event.snapshot.key, event.snapshot.value);
+      onData(todo);
+    });
+
+    return subscription;
+  }
 }
 
 class Preferences {
@@ -568,7 +709,7 @@ class Preferences {
   static Future<bool> setAccountKey(String accountKey) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setString(ACCOUNT_KEY, accountKey);
-    return prefs.commit();
+    return prefs.commit;
   }
 
   static Future<String> getAccountKey() async {

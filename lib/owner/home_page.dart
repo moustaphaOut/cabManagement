@@ -19,12 +19,14 @@ class HomeOwner extends StatefulWidget {
 }
 
 class _HomeOwner extends State<HomeOwner> {
-  List vehicules = [
-    "Moustapha",
-    "Hassan",
-  ];
+  List<int> _drivers = [0,0];
+  List<Widget> _content;
+  Map<String, String> _chauffeurs = {"hola": "test"};
+  Map<String, String> _vehicules = {"hola": "test"};
   List<DropdownMenuItem<String>> _dropDownMenuItems;
-  String _currentVehicule;
+  List<DropdownMenuItem<String>> _dropDownMenuItemsVehicule;
+  String _currentChauffeur, _currentKeyChauffeur;
+  String _currentVehicule, _currentKeyVehicule;
 
   String _consommation_jour = "",
       _depense_jour = "",
@@ -36,30 +38,13 @@ class _HomeOwner extends State<HomeOwner> {
 
   @override
   void initState() {
-    initVehicules();
-
-    FirebaseTodos.getDetailsJournalier(_currentVehicule, pickedDate, _updateDetailsJournalier)
+    FirebaseTodos.getItems(_updateItems)
         .then((StreamSubscription s) => _subscriptionTodo = s);
 
     super.initState();
   }
 
   DateTime pickedDate = DateTime.now();
-
-  Future<Null> _selectDate(BuildContext context) async {
-    DateTime selectedDate = DateTime.now();
-    final DateTime picked = await showDatePicker(
-        context: context,
-        initialDate: pickedDate,
-        firstDate: DateTime(2019, 08, 27),
-        lastDate: selectedDate);
-    if (picked != null && picked != selectedDate)
-      setState(() {
-        pickedDate = picked;
-        FirebaseTodos.getDetailsJournalier(_currentVehicule, picked, _updateDetailsJournalier)
-            .then((StreamSubscription s) => _subscriptionTodo = s);
-      });
-  }
 
   final databaseReference = FirebaseDatabase.instance.reference();
   @override
@@ -74,14 +59,14 @@ class _HomeOwner extends State<HomeOwner> {
             onPressed: () => _onAlertButtonPressed(context),
           ),
           Center(
-            child: new Text("1/3"),
+            child: new Text(_drivers[1].toString() + "/" + _drivers[0].toString()),
           ),
           new IconButton(
-            icon: new Icon(Icons.message),
+            icon: new Icon(Icons.notifications),
             onPressed: () => {},
           ),
           Center(
-            child: new Text("1"),
+            child: new Text("0"),
           ),
         ],
       ),
@@ -118,19 +103,23 @@ class _HomeOwner extends State<HomeOwner> {
               alignment: Alignment.topCenter,
               decoration: BoxDecoration(),
               child: Column(children: [
+                RaisedButton(
+                  onPressed: () => _selectDate(context),
+                  child: Text(formatDate('dd-MM-yyyy', pickedDate)),
+                ),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: <Widget>[
-                    //Text("${selectedDate.toLocal()}"),
                     DropdownButton(
                       value: _currentVehicule,
+                      items: _dropDownMenuItemsVehicule,
+                      onChanged: changedDropDownItemVehicule,
+                    ),
+                    DropdownButton(
+                      value: _currentChauffeur,
                       items: _dropDownMenuItems,
                       onChanged: changedDropDownItem,
-                    ),
-                    RaisedButton(
-                      onPressed: () => _selectDate(context),
-                      child: Text(formatDate('dd-MM-yyyy', pickedDate)),
                     ),
                   ],
                 ),
@@ -179,11 +168,15 @@ class _HomeOwner extends State<HomeOwner> {
             title: Text('Profile'),
           ),
         ],
+        currentIndex: 0,
+        //backgroundColor: ,
         onTap: (currentIndex) {
           if (currentIndex == 2)
-            Navigator.of(context).pushNamedAndRemoveUntil(ProfileOwner.tag,(Route<dynamic> route) => false);
+            Navigator.of(context).pushNamedAndRemoveUntil(
+                ProfileOwner.tag, (Route<dynamic> route) => false);
           else if (currentIndex == 1)
-            Navigator.of(context).pushNamedAndRemoveUntil(TrafficOwner2.tag,(Route<dynamic> route) => false);
+            Navigator.of(context).pushNamedAndRemoveUntil(
+                TrafficOwner2.tag, (Route<dynamic> route) => false);
           //Navigator.of(context).pushNamed(Profile.tag);
         },
         selectedItemColor: Colors.amber[800],
@@ -191,54 +184,70 @@ class _HomeOwner extends State<HomeOwner> {
     );
   }
 
-  void changedDropDownItem(String selectedCity) {
+  void changedDropDownItem(String selectedChauffeur) {
     setState(() {
-      _currentVehicule = selectedCity;
-       FirebaseTodos.getDetailsJournalier(_currentVehicule, pickedDate, _updateDetailsJournalier)
-            .then((StreamSubscription s) => _subscriptionTodo = s);
+      _currentChauffeur = selectedChauffeur;
+      _currentKeyChauffeur = _chauffeurs.keys.firstWhere(
+          (k) => _chauffeurs[k] == _currentChauffeur,
+          orElse: () => null);
+      FirebaseTodos.getDetailsJournalier(_currentKeyVehicule,
+              _currentKeyChauffeur, pickedDate, _updateDetailsJournalier)
+          .then((StreamSubscription s) => _subscriptionTodo = s);
+          
+          
     });
   }
 
-  void initVehicules() {
-    var ref = FirebaseDatabase.instance
-        .reference()
-        .child("proprietaire")
-        .child("21YOLwa4ITRAdUNy824AfkHBRZ23")
-        .child("agreement");
-    ref.orderByKey().once().then((onValue) {
-      Map<dynamic, dynamic> map = onValue.value;
-      //print(map.keys);
-      print("------------1----------------");
-      
+  void changedDropDownItemVehicule(String selectedVehicule) {
+    setState(() {
+      _currentVehicule = selectedVehicule;
+      _currentKeyVehicule = _vehicules.keys.firstWhere(
+          (k) => _vehicules[k] == _currentVehicule,
+          orElse: () => null);
+      FirebaseTodos.getDetailsJournalier(_currentKeyVehicule,
+              _currentKeyChauffeur, pickedDate, _updateDetailsJournalier)
+          .then((StreamSubscription s) => _subscriptionTodo = s);
+    });
+  }
+
+  Future<Null> _selectDate(BuildContext context) async {
+    DateTime selectedDate = DateTime.now();
+    final DateTime picked = await showDatePicker(
+        context: context,
+        initialDate: pickedDate,
+        firstDate: DateTime(2019, 08, 27),
+        lastDate: selectedDate);
+    if (picked != null && picked != selectedDate)
       setState(() {
-        vehicules.add(map.values.toList()[0]["vehicule"]["num_immatriculation"]);
-        vehicules.add(map.values.toList()[1]["vehicule"]["num_immatriculation"]);
+        pickedDate = picked;
+        FirebaseTodos.getDetailsJournalier(_currentKeyVehicule,
+                _currentKeyChauffeur, picked, _updateDetailsJournalier)
+            .then((StreamSubscription s) => _subscriptionTodo = s);
       });
-      print("------------2----------------");
-    });
-
-    List<DropdownMenuItem<String>> getDropDownMenuItems() {
-      List<DropdownMenuItem<String>> items = new List();
-      for (String vehicule in vehicules) {
-        items.add(
-            new DropdownMenuItem(value: vehicule, child: new Text(vehicule)));
-      }
-      return items;
-    }
-    _dropDownMenuItems = getDropDownMenuItems();
-    _currentVehicule = _dropDownMenuItems[0].value;
   }
+
+  List<DropdownMenuItem<String>> getDropDownMenuItems(ss) {
+    List<DropdownMenuItem<String>> items = new List();
+    ss.forEach((key, values) {
+      items.add(new DropdownMenuItem(
+          value: values, child: new Text(values), key: Key(key)));
+    });
+    return items;
+  }
+  
 
   // Alert with single button.
   _onAlertButtonPressed(context) {
     Alert(
       context: context,
-      title: "Drivers 1/3",
-      desc: "simo Riding\n Ahmed free\n Yasine free",
+      title: "Chauffeurs " + _drivers[1].toString() + "/" + _drivers[0].toString(),
+      content: Column(
+        children:_content,
+      ),
       buttons: [
         DialogButton(
           child: Text(
-            "COOL",
+            "Ok",
             style: TextStyle(color: Colors.white, fontSize: 20),
           ),
           onPressed: () => Navigator.pop(context),
@@ -269,6 +278,29 @@ class _HomeOwner extends State<HomeOwner> {
     var formatter = new DateFormat(format);
     return formatter.format(x);
   }
+
+  _updateItems(TodoItems value) {
+    setState(() {
+      _drivers = value.nbDrivers;
+      _content = value.content;
+
+      _chauffeurs = value.chauffeurs;
+      _dropDownMenuItems = getDropDownMenuItems(_chauffeurs);
+      _currentChauffeur = _dropDownMenuItems[0].value;
+      _currentKeyChauffeur = _chauffeurs.keys.firstWhere(
+          (k) => _chauffeurs[k] == _currentChauffeur,
+          orElse: () => null);
+
+      _vehicules = value.vehicules;
+      _dropDownMenuItemsVehicule = getDropDownMenuItems(_vehicules);
+      _currentVehicule = _dropDownMenuItemsVehicule[0].value;
+      _currentKeyVehicule = _vehicules.keys.firstWhere(
+          (k) => _vehicules[k] == _currentVehicule,
+          orElse: () => null);
+
+      
+    });
+  }
 }
 
 class DetailsJournalier {
@@ -294,19 +326,102 @@ class DetailsJournalier {
   }
 }
 
+class TodoItems {
+  final String key;
+  Map<String, String> chauffeurs = {};
+  Map<String, String> vehicules = {};
+  String text = '';
+  int actif = 0;
+  int nbChauffeur = 0;
+  List<int> nbDrivers = [];
+  List<Widget> content = new List();
+  TodoItems.fromJson(this.key, Map data) {
+    Map mapChauffeurs;
+    for (int i = 0; i < data.keys.toList().length; i++) {
+      vehicules[data.keys.toList()[i].toString()] =
+          data.values.toList()[i]["vehicule"]["num_immatriculation"];
+
+      mapChauffeurs = data.values.toList()[i]["vehicule"]["chauffeur"];
+      if (mapChauffeurs != null) {
+        nbChauffeur = mapChauffeurs.keys.toList().length;
+        for (int j = 0; j < mapChauffeurs.keys.toList().length; j++) {
+          chauffeurs[mapChauffeurs.keys.toList()[j].toString()] =
+              mapChauffeurs.values.toList()[j]["nom_chauffeur"];
+          actif += mapChauffeurs.values.toList()[j]["statut_chauffeur"];
+          if (mapChauffeurs.values.toList()[j]["statut_chauffeur"] == 1)
+            content.add(
+              new Row(
+                //crossAxisAlignment: CrossAxisAlignment.center,
+                //mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: <Widget>[
+                  Icon(
+                    Icons.lens,
+                    color: Colors.green,
+                  ),
+                  Text('  '+mapChauffeurs.values.toList()[j]["nom_chauffeur"])
+                ],
+              ),
+            );
+          else
+             content.add(
+              new Row(
+                //crossAxisAlignment: CrossAxisAlignment.center,
+                //mainAxisAlignment: MainAxisAlignment.start,
+                children: <Widget>[
+                  Icon(
+                    Icons.lens,
+                    color: Colors.red,
+                  ),
+                  Text('  '+mapChauffeurs.values.toList()[j]["nom_chauffeur"])
+                ],
+              ),
+            );
+        }
+        nbDrivers.add(nbChauffeur);
+        nbDrivers.add(actif);
+      }
+    }
+  }
+}
+
 class FirebaseTodos {
-  static Future<StreamSubscription<Event>> getDetailsJournalier(String _currentVehicule,
-      DateTime filterDate, void onData(DetailsJournalier todo)) async {
+  static Future<StreamSubscription<Event>> getItems(
+      void onData(TodoItems todo)) async {
     String accountKey = await Preferences.getAccountKey();
     StreamSubscription<Event> subscription = FirebaseDatabase.instance
         .reference()
         .child("proprietaire")
         .child(accountKey)
         .child("agreement")
-        .child("agr1")
+        //.child("agr1")
+        // .child("vehicule")
+        //.child("chauffeur")
+        .orderByKey()
+        .onValue
+        .listen((Event event) {
+      var todo =
+          new TodoItems.fromJson(event.snapshot.key, event.snapshot.value);
+      onData(todo);
+    });
+
+    return subscription;
+  }
+
+  static Future<StreamSubscription<Event>> getDetailsJournalier(
+      String currentKeyAgreement,
+      String currentKeyChauffeur,
+      DateTime filterDate,
+      void onData(DetailsJournalier todo)) async {
+    String accountKey = await Preferences.getAccountKey();
+    StreamSubscription<Event> subscription = FirebaseDatabase.instance
+        .reference()
+        .child("proprietaire")
+        .child(accountKey)
+        .child("agreement")
+        .child(currentKeyAgreement)
         .child("vehicule")
         .child("chauffeur")
-        .child(_currentVehicule) //.child(await getCurrentUid())
+        .child(currentKeyChauffeur) //.child(await getCurrentUid())
         .child("details_journalier")
         .child(_HomeOwner().formatDate('dd_MM_yyyy', filterDate))
         .onValue
@@ -327,7 +442,7 @@ class Preferences {
   static Future<bool> setAccountKey(String accountKey) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setString(ACCOUNT_KEY, accountKey);
-    return prefs.commit();
+    return prefs.commit;
   }
 
   static Future<String> getAccountKey() async {

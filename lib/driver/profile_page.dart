@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:gestion_taxi/driver/home_page.dart';
+import 'package:gestion_taxi/driver/traffic_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../update_field_dialog.dart';
@@ -31,7 +33,7 @@ class _ProfileDriver extends State<ProfileDriver> {
  @override
   void initState() {
     //FirebaseTodos.getTodo("-KriJ8Sg4lWIoNswKWc4").then(_updateTodo);
-    FirebaseTodos.getProprietaire(_updateChauffeur)
+    FirebaseTodos.getChauffeur(_updateChauffeur)
         .then((StreamSubscription s) => _subscriptionTodo = s);
   }
   @override
@@ -111,7 +113,33 @@ class _ProfileDriver extends State<ProfileDriver> {
           ),
         ),
       ),
+      bottomNavigationBar: BottomNavigationBar(
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            title: Text('Home'),
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.track_changes),
+            title: Text('My traffic'),
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.supervised_user_circle),
+            title: Text('Profile'),
+          ),
+        ],
+        currentIndex: 2,
+        onTap: (currentIndex) {
+          if (currentIndex == 0)
+            Navigator.of(context).pushNamedAndRemoveUntil(HomeDriver.tag,(Route<dynamic> route) => false);
+          else if (currentIndex == 1)
+            Navigator.of(context).pushNamedAndRemoveUntil(TrafficDriver.tag,(Route<dynamic> route) => false);
+          //Navigator.of(context).pushNamed(Profile.tag);
+        },
+        selectedItemColor: Colors.amber[800],
+      ),
        backgroundColor: Colors.teal[200],
+       
     );
   }
   Future<void> _signOut() async {
@@ -177,7 +205,7 @@ class TodoChauffeur {
 class FirebaseTodos {
   /// FirebaseTodos.getTodoStream("-KriJ8Sg4lWIoNswKWc4", _updateTodo)
   /// .then((StreamSubscription s) => _subscriptionTodo = s);
-  static Future<StreamSubscription<Event>> getProprietaire(
+  static Future<StreamSubscription<Event>> getChauffeur(
       void onData(TodoChauffeur todo)) async {
     String accountKey = await Preferences.getAccountKey();
 
@@ -207,7 +235,7 @@ class Preferences {
   static Future<bool> setAccountKey(String accountKey) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setString(ACCOUNT_KEY, accountKey);
-    return prefs.commit();
+    return prefs.commit;
   }
 
   static Future<String> getAccountKey() async {

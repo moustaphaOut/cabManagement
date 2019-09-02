@@ -19,12 +19,12 @@ class HomeDriver extends StatefulWidget {
 
 class _HomeDriver extends State<HomeDriver> {
   //var now = formatDate(DateTime(2019, 08, 29), [dd, '_', mm, '_', yyyy]);
-  String _consommation_jour = "",
-      _depense_jour = "",
-      _recette_jour = "",
-      _nombre_client = "",
-      _km_parcouru = "",
-      _heure_travaille = "";
+  String _consommation_jour = "0",
+      _depense_jour = "0",
+      _recette_jour = "0",
+      _nombre_client = "0",
+      _km_parcouru = "0",
+      _heure_travaille = "0";
   StreamSubscription _subscriptionTodo;
   @override
   void initState() {
@@ -145,11 +145,14 @@ class _HomeDriver extends State<HomeDriver> {
             title: Text('Profile'),
           ),
         ],
+        currentIndex: 0,
         onTap: (currentIndex) {
           if (currentIndex == 2)
-            Navigator.of(context).pushNamedAndRemoveUntil(ProfileDriver.tag,(Route<dynamic> route) => false);
+            Navigator.of(context).pushNamedAndRemoveUntil(
+                ProfileDriver.tag, (Route<dynamic> route) => false);
           else if (currentIndex == 1)
-            Navigator.of(context).pushNamedAndRemoveUntil(TrafficDriver.tag,(Route<dynamic> route) => false);
+            Navigator.of(context).pushNamedAndRemoveUntil(
+                TrafficDriver.tag, (Route<dynamic> route) => false);
           //Navigator.of(context).pushNamed(Profile.tag);
         },
         selectedItemColor: Colors.amber[800],
@@ -167,7 +170,8 @@ class _HomeDriver extends State<HomeDriver> {
       _heure_travaille = value.heure_travaille;
     });
   }
-   String getCurrentDate(String format) {
+
+  String getCurrentDate(String format) {
     var now = new DateTime.now();
     var formatter = new DateFormat(format);
     return formatter.format(now);
@@ -176,28 +180,28 @@ class _HomeDriver extends State<HomeDriver> {
 
 class DetailsJournalier {
   final String key;
-  String consommation_jour,
-      depense_jour,
-      recette_jour,
-      nombre_client,
-      km_parcouru,
-      heure_travaille;
+  String consommation_jour = "0",
+      depense_jour = "0",
+      recette_jour = "0",
+      nombre_client = "0",
+      km_parcouru = "0",
+      heure_travaille = "0";
   DetailsJournalier.fromJson(this.key, Map data) {
-    consommation_jour =
-        (data['consommation_jour'] == null ? '' : data['consommation_jour']);
-    depense_jour = (data['depense_jour'] == null ? '' : data['depense_jour']);
-    recette_jour = (data['recette_jour'] == null ? '' : data['recette_jour']);
-    nombre_client =
-        (data['nombre_client'] == null ? '' : data['nombre_client']);
-    km_parcouru = (data['km_parcouru'] == null ? '' : data['km_parcouru']);
-    heure_travaille =
-        (data['heure_travaille'] == null ? '' : data['heure_travaille']);
+    if (data != null) {
+      consommation_jour =
+          (data['consommation_jour'] == null ? '' : data['consommation_jour']);
+      depense_jour = (data['depense_jour'] == null ? '' : data['depense_jour']);
+      recette_jour = (data['recette_jour'] == null ? '' : data['recette_jour']);
+      nombre_client =
+          (data['nombre_client'] == null ? '' : data['nombre_client']);
+      km_parcouru = (data['km_parcouru'] == null ? '' : data['km_parcouru']);
+      heure_travaille =
+          (data['heure_travaille'] == null ? '' : data['heure_travaille']);
+    }
   }
- 
 }
 
 class FirebaseTodos {
- 
   static Future<StreamSubscription<Event>> getDetailsJournalier(
       void onData(DetailsJournalier todo)) async {
     String accountKey = await Preferences.getAccountKey();
@@ -229,7 +233,7 @@ class Preferences {
   static Future<bool> setAccountKey(String accountKey) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setString(ACCOUNT_KEY, accountKey);
-    return prefs.commit();
+    return prefs.commit;
   }
 
   static Future<String> getAccountKey() async {
