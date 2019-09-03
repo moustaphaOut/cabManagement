@@ -8,7 +8,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import './home_page.dart';
 import '../widgets/info_card.dart';
-import '../model/proprietaire.dart';
 import './traffic_owner.dart';
 
 const photo = 'assets/alucard.jpg';
@@ -37,26 +36,26 @@ class _ProfileOwner extends State<ProfileOwner> {
   String _currentVehicule, _currentKeyVehicule;
   String _currentChauffeur, _currentKeyChauffeur;
   StreamSubscription _subscriptionTodo;
-  String _cin_chauffeur = "",
-      _email_chauffeur = "",
-      _nom_chauffeur = "",
-      _prenom_chauffeur = "",
-      _telephone_chauffeur = "",
-      _date_naissance_chauffeur = "";
-  String _cin_proprietaire = "",
-      _email_proprietaire = "",
-      _nom_proprietaire = "",
-      _prenom_proprietaire = "";
-  String _num_agreement = "",
-      _duree_agreement = "",
-      _date_agreement = "",
-      _copie_agreemen = "";
-  String _num_immatriculation = "",
-      _marque_vehicule = "",
-      _modele_vehicule = "",
-      _annee_modele_vehicule = "",
-      _telephone_proprietaire = "",
-      _date_naissance_proprietaire = "";
+  String _cinChauffeur = "",
+      _emailChauffeur = "",
+      _nomChauffeur = "",
+      _prenomChauffeur = "",
+      _telephoneChauffeur = "",
+      _dateNaissanceChauffeur = "";
+  String _cinProprietaire = "",
+      _emailProprietaire = "",
+      _nomProprietaire = "",
+      _prenomProprietaire = "";
+  String _numAgreement = "",
+      _dureeAgreement = "",
+      _dateAgreement = "",
+      _copieAgreement = "";
+  String _numImmatriculation = "",
+      _marqueVehicule = "",
+      _modeleVehicule = "",
+      _anneeModeleVehicule = "",
+      _telephoneProprietaire = "",
+      _dateNaissanceProprietaire = "";
   @override
   void initState() {
     FirebaseTodos.getItems(_agreements, _updateItems)
@@ -87,12 +86,13 @@ class _ProfileOwner extends State<ProfileOwner> {
             backgroundColor: Color(0xfff00000),
             //backgroundColor: Color(0xff308e1c),
             bottom: TabBar(
+              
               indicatorColor: Color(0xffff00000),
               tabs: [
-                Tab(text: "Profile"),
-                Tab(text: "Agreement"),
-                Tab(text: "Vehicule"),
-                Tab(text: "Chauffeurs"),
+                Tab(icon: new Icon(Icons.account_circle)),
+                Tab(icon: new Icon(Icons.local_taxi)),
+                Tab(icon: new Icon(Icons.directions_car)),
+                Tab(icon: new Icon(Icons.supervised_user_circle)),
               ],
             ),
             title: Text('Information personnel'),
@@ -117,7 +117,7 @@ class _ProfileOwner extends State<ProfileOwner> {
                           backgroundImage: AssetImage(photo),
                         ),
                         Text(
-                          _prenom_proprietaire + " " + _nom_proprietaire,
+                          _prenomProprietaire + " " + _nomProprietaire,
                           style: TextStyle(
                             fontSize: 20.0,
                             color: Colors.white,
@@ -143,19 +143,19 @@ class _ProfileOwner extends State<ProfileOwner> {
                           ),
                         ),
                         InfoCard(
-                          text: _cin_proprietaire,
+                          text: _cinProprietaire,
                           icon: Icons.web,
                           colorText: Colors.teal,
                           onPressed: () {},
                         ),
                         InfoCard(
-                          text: _telephone_proprietaire,
+                          text: _telephoneProprietaire,
                           icon: Icons.phone,
                           colorText: Colors.teal,
                           onPressed: () {},
                         ),
                         InfoCard(
-                          text: _email_proprietaire,
+                          text: _emailProprietaire,
                           icon: Icons.email,
                           colorText: Colors.teal,
                           onPressed: () {},
@@ -171,7 +171,7 @@ class _ProfileOwner extends State<ProfileOwner> {
                           icon: Icons.alternate_email,
                         ),
                         InfoCard(
-                          text: _date_naissance_proprietaire,
+                          text: _dateNaissanceProprietaire,
                           colorText: Colors.teal,
                           icon: Icons.calendar_today,
                         ),
@@ -187,10 +187,16 @@ class _ProfileOwner extends State<ProfileOwner> {
                     child: ListView(
                       padding: const EdgeInsets.all(20.0),
                       children: <Widget>[
-                        DropdownButton(
-                          value: _currentAgreement,
-                          items: _dropDownMenuItems,
-                          onChanged: changedDropDownItem,
+                        new Row(
+                          children: <Widget>[
+                            Text("Num Immatriculation: ",style: TextStyle(fontSize: 15.0,color: Colors.redAccent),),
+                            DropdownButton(
+                              iconEnabledColor: Colors.greenAccent,
+                              value: _currentAgreement,
+                              items: _dropDownMenuItems,
+                              onChanged: changedDropDownItem,
+                            ),
+                          ],
                         ),
                         SizedBox(
                           height: 20,
@@ -200,19 +206,19 @@ class _ProfileOwner extends State<ProfileOwner> {
                           ),
                         ),
                         InfoCard(
-                          text: _num_agreement,
+                          text: _numAgreement,
                           icon: Icons.web,
                           colorText: Colors.teal,
                           onPressed: () {},
                         ),
                         InfoCard(
-                          text: _date_agreement,
+                          text: _dateAgreement,
                           icon: Icons.phone,
                           colorText: Colors.teal,
                           onPressed: () {},
                         ),
                         InfoCard(
-                          text: _duree_agreement,
+                          text: _dureeAgreement,
                           icon: Icons.email,
                           colorText: Colors.teal,
                           onPressed: () {},
@@ -247,25 +253,25 @@ class _ProfileOwner extends State<ProfileOwner> {
                           ),
                         ),
                         InfoCard(
-                          text: _num_immatriculation,
+                          text: _numImmatriculation,
                           icon: Icons.web,
                           colorText: Colors.teal,
                           onPressed: () {},
                         ),
                         InfoCard(
-                          text: _marque_vehicule,
+                          text: _marqueVehicule,
                           icon: Icons.phone,
                           colorText: Colors.teal,
                           onPressed: () {},
                         ),
                         InfoCard(
-                          text: _modele_vehicule,
+                          text: _modeleVehicule,
                           icon: Icons.email,
                           colorText: Colors.teal,
                           onPressed: () {},
                         ),
                         InfoCard(
-                          text: _annee_modele_vehicule,
+                          text: _anneeModeleVehicule,
                           colorText: Colors.teal,
                           icon: Icons.location_city,
                         ),
@@ -294,25 +300,25 @@ class _ProfileOwner extends State<ProfileOwner> {
                           ),
                         ),
                         InfoCard(
-                          text: _cin_chauffeur,
+                          text: _cinChauffeur,
                           icon: Icons.web,
                           colorText: Colors.teal,
                           onPressed: () {},
                         ),
                         InfoCard(
-                          text: _prenom_chauffeur + ' ' + _nom_chauffeur,
+                          text: _prenomChauffeur + ' ' + _nomChauffeur,
                           icon: Icons.phone,
                           colorText: Colors.teal,
                           onPressed: () {},
                         ),
                         InfoCard(
-                          text: _telephone_chauffeur,
+                          text: _telephoneChauffeur,
                           icon: Icons.email,
                           colorText: Colors.teal,
                           onPressed: () {},
                         ),
                         InfoCard(
-                          text: _date_naissance_chauffeur,
+                          text: _dateNaissanceChauffeur,
                           colorText: Colors.teal,
                           icon: Icons.location_city,
                         ),
@@ -406,41 +412,41 @@ class _ProfileOwner extends State<ProfileOwner> {
 
   _updateProprietaire(TodoProprietaire value) {
     setState(() {
-      _cin_proprietaire = value.cin_proprietaire;
-      _email_proprietaire = value.email_proprietaire;
-      _nom_proprietaire = value.nom_proprietaire;
-      _prenom_proprietaire = value.prenom_proprietaire;
-      _telephone_proprietaire = value.telephone_proprietaire;
-      _date_naissance_proprietaire = value.date_naissance_proprietaire;
+      _cinProprietaire = value.cinProprietaire;
+      _emailProprietaire = value.emailProprietaire;
+      _nomProprietaire = value.nomProprietaire;
+      _prenomProprietaire = value.prenomProprietaire;
+      _telephoneProprietaire = value.telephoneProprietaire;
+      _dateNaissanceProprietaire = value.dateNaissanceProprietaire;
     });
   }
 
   _updateAgreement(TodoAgreement value) {
     setState(() {
-      _num_agreement = value.num_agreement;
-      _date_agreement = value.date_agreement;
-      _duree_agreement = value.duree_agreement;
-      _copie_agreemen = value.copie_agreemen;
+      _numAgreement = value.numAgreement;
+      _dateAgreement = value.dateAgreement;
+      _dureeAgreement = value.dureeAgreement;
+      _copieAgreement = value.copieAgreement;
     });
   }
 
   _updateVehicule(TodoVehicule value) {
     setState(() {
-      _num_immatriculation = value.num_immatriculation;
-      _marque_vehicule = value.marque_vehicule;
-      _modele_vehicule = value.modele_vehicule;
-      _annee_modele_vehicule = value.annee_modele_vehicule;
+      _numImmatriculation = value.numImmatriculation;
+      _marqueVehicule = value.marqueVehicule;
+      _modeleVehicule = value.modeleVehicule;
+      _anneeModeleVehicule = value.anneeModeleVehicule;
     });
   }
 
   _updateChauffeur(TodoChauffeur value) {
     setState(() {
-      _cin_chauffeur = value.cin_chauffeur;
-      _email_chauffeur = value.email_chauffeur;
-      _nom_chauffeur = value.nom_chauffeur;
-      _prenom_chauffeur = value.prenom_chauffeur;
-      _telephone_chauffeur = value.telephone_chauffeur;
-      _date_naissance_chauffeur = value.date_naissance_chauffeur;
+      _cinChauffeur = value.cinChauffeur;
+      _emailChauffeur = value.emailChauffeur;
+      _nomChauffeur = value.nomChauffeur;
+      _prenomChauffeur = value.prenomChauffeur;
+      _telephoneChauffeur = value.telephoneChauffeur;
+      _dateNaissanceChauffeur = value.dateNaissanceChauffeur;
     });
   }
 
@@ -489,26 +495,26 @@ Future<String> getCurrentUid() async {
 
 class TodoProprietaire {
   final String key;
-  String cin_proprietaire,
-      email_proprietaire,
-      nom_proprietaire,
-      prenom_proprietaire,
-      telephone_proprietaire,
-      date_naissance_proprietaire;
+  String cinProprietaire,
+      emailProprietaire,
+      nomProprietaire,
+      prenomProprietaire,
+      telephoneProprietaire,
+      dateNaissanceProprietaire;
   TodoProprietaire.fromJson(this.key, Map data) {
-    cin_proprietaire =
+    cinProprietaire =
         (data['cin_proprietaire'] == null ? '' : data['cin_proprietaire']);
-    email_proprietaire =
+    emailProprietaire =
         (data['email_proprietaire'] == null ? '' : data['email_proprietaire']);
-    nom_proprietaire =
+    nomProprietaire =
         (data['nom_proprietaire'] == null ? '' : data['nom_proprietaire']);
-    prenom_proprietaire = (data['prenom_proprietaire'] == null
+    prenomProprietaire = (data['prenom_proprietaire'] == null
         ? ''
         : data['prenom_proprietaire']);
-    telephone_proprietaire = (data['telephone_proprietaire'] == null
+    telephoneProprietaire = (data['telephone_proprietaire'] == null
         ? ''
         : data['telephone_proprietaire']);
-    date_naissance_proprietaire = (data['date_naissance_proprietaire'] == null
+    dateNaissanceProprietaire = (data['date_naissance_proprietaire'] == null
         ? ''
         : data['date_naissance_proprietaire']);
   }
@@ -516,60 +522,57 @@ class TodoProprietaire {
 
 class TodoAgreement {
   final String key;
-  String num_agreement, duree_agreement, date_agreement, copie_agreemen;
+  String numAgreement, dureeAgreement, dateAgreement, copieAgreement;
   TodoAgreement.fromJson(this.key, Map data) {
-    num_agreement =
-        (data['num_agreement'] == null ? '' : data['num_agreement']);
-    date_agreement =
+    numAgreement = (data['num_agreement'] == null ? '' : data['num_agreement']);
+    dateAgreement =
         (data['date_agreement'] == null ? '' : data['date_agreement']);
-    duree_agreement =
+    dureeAgreement =
         (data['duree_agreement'] == null ? '' : data['duree_agreement']);
-    copie_agreemen =
+    copieAgreement =
         (data['copie_agreement'] == null ? '' : data['copie_agreement']);
   }
 }
 
 class TodoVehicule {
   final String key;
-  String num_immatriculation,
-      annee_modele_vehicule,
-      marque_vehicule,
-      modele_vehicule;
+  String numImmatriculation,
+      anneeModeleVehicule,
+      marqueVehicule,
+      modeleVehicule;
   TodoVehicule.fromJson(this.key, Map data) {
-    num_immatriculation = (data['num_immatriculation'] == null
+    numImmatriculation = (data['num_immatriculation'] == null
         ? ''
         : data['num_immatriculation']);
-    annee_modele_vehicule = (data['annee_modele_vehicule'] == null
+    anneeModeleVehicule = (data['annee_modele_vehicule'] == null
         ? ''
         : data['annee_modele_vehicule']);
-    marque_vehicule =
+    marqueVehicule =
         (data['marque_vehicule'] == null ? '' : data['marque_vehicule']);
-    modele_vehicule =
+    modeleVehicule =
         (data['modele_vehicule'] == null ? '' : data['modele_vehicule']);
   }
 }
 
 class TodoChauffeur {
   final String key;
-  String cin_chauffeur,
-      email_chauffeur,
-      nom_chauffeur,
-      prenom_chauffeur,
-      telephone_chauffeur,
-      date_naissance_chauffeur;
+  String cinChauffeur,
+      emailChauffeur,
+      nomChauffeur,
+      prenomChauffeur,
+      telephoneChauffeur,
+      dateNaissanceChauffeur;
   TodoChauffeur.fromJson(this.key, Map data) {
-    cin_chauffeur =
-        (data['cin_chauffeur'] == null ? '' : data['cin_chauffeur']);
-    email_chauffeur =
+    cinChauffeur = (data['cin_chauffeur'] == null ? '' : data['cin_chauffeur']);
+    emailChauffeur =
         (data['email_chauffeur'] == null ? '' : data['email_chauffeur']);
-    nom_chauffeur =
-        (data['nom_chauffeur'] == null ? '' : data['nom_chauffeur']);
-    prenom_chauffeur =
+    nomChauffeur = (data['nom_chauffeur'] == null ? '' : data['nom_chauffeur']);
+    prenomChauffeur =
         (data['prenom_chauffeur'] == null ? '' : data['prenom_chauffeur']);
-    telephone_chauffeur = (data['telephone_chauffeur'] == null
+    telephoneChauffeur = (data['telephone_chauffeur'] == null
         ? ''
         : data['telephone_chauffeur']);
-    date_naissance_chauffeur = (data['date_naissance_chauffeur'] == null
+    dateNaissanceChauffeur = (data['date_naissance_chauffeur'] == null
         ? ''
         : data['date_naissance_chauffeur']);
   }

@@ -1,6 +1,7 @@
 import 'dart:async';
+import 'package:unicorndial/unicorndial.dart';
 import 'package:intl/intl.dart';
-
+import 'package:badges/badges.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
@@ -19,7 +20,7 @@ class HomeOwner extends StatefulWidget {
 }
 
 class _HomeOwner extends State<HomeOwner> {
-  List<int> _drivers = [0,0];
+  List<int> _drivers = [0, 0];
   List<Widget> _content;
   Map<String, String> _chauffeurs = {"hola": "test"};
   Map<String, String> _vehicules = {"hola": "test"};
@@ -27,13 +28,15 @@ class _HomeOwner extends State<HomeOwner> {
   List<DropdownMenuItem<String>> _dropDownMenuItemsVehicule;
   String _currentChauffeur, _currentKeyChauffeur;
   String _currentVehicule, _currentKeyVehicule;
+  var _childButtons = List<UnicornButton>();
 
-  String _consommation_jour = "",
-      _depense_jour = "",
-      _recette_jour = "",
-      _nombre_client = "",
-      _km_parcouru = "",
-      _heure_travaille = "";
+  String _consommationJour = "0",
+      _depenseJour = "0",
+      _recetteJour = "0",
+      _nombreClient = "0",
+      _kmParcouru = "0",
+      _heureTravaille = "0",
+      _numImmatriculation = "0";
   StreamSubscription _subscriptionTodo;
 
   @override
@@ -50,23 +53,22 @@ class _HomeOwner extends State<HomeOwner> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      floatingActionButton: UnicornDialer(
+          backgroundColor: Color.fromRGBO(255, 255, 255, 0.6),
+          parentButtonBackground: Color.fromRGBO(2,238,238,1),
+          orientation: UnicornOrientation.VERTICAL,
+          parentButton: Icon(Icons.supervised_user_circle),
+          childButtons: _childButtons),
       appBar: AppBar(
         backgroundColor: Color.fromRGBO(255, 0, 0, 0.7),
         title: Text('Home'),
         actions: <Widget>[
-          new IconButton(
-            icon: new Icon(Icons.supervised_user_circle),
-            onPressed: () => _onAlertButtonPressed(context),
-          ),
-          Center(
-            child: new Text(_drivers[1].toString() + "/" + _drivers[0].toString()),
-          ),
-          new IconButton(
-            icon: new Icon(Icons.notifications),
-            onPressed: () => {},
-          ),
-          Center(
-            child: new Text("0"),
+          Badge(
+            badgeContent: Text('1'),
+            child: Icon(
+              Icons.notification_important,
+              size: 30,
+            ),
           ),
         ],
       ),
@@ -89,10 +91,10 @@ class _HomeOwner extends State<HomeOwner> {
               ),
               child: Column(
                 children: [
-                  Text("sensor_1 of ahmed doesn't work",
-                      style: TextStyle(fontSize: 18, color: Colors.red)),
-                  Text("Simo didn't ride this day !",
-                      style: TextStyle(fontSize: 18, color: Colors.red)),
+                  //Text("sensor_1 of ahmed doesn't work",
+                     // style: TextStyle(fontSize: 18, color: Colors.red)),
+                  Text("Keep going !",
+                      style: TextStyle(fontSize: 18, color: Colors.green)),
                 ],
               ),
             ),
@@ -103,20 +105,23 @@ class _HomeOwner extends State<HomeOwner> {
               alignment: Alignment.topCenter,
               decoration: BoxDecoration(),
               child: Column(children: [
-                RaisedButton(
-                  onPressed: () => _selectDate(context),
-                  child: Text(formatDate('dd-MM-yyyy', pickedDate)),
-                ),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: <Widget>[
-                    DropdownButton(
+                    /*DropdownButton(
                       value: _currentVehicule,
                       items: _dropDownMenuItemsVehicule,
                       onChanged: changedDropDownItemVehicule,
+                    ),*/
+                    RaisedButton(
+                      onPressed: () => _selectDate(context),
+                      child: Text(formatDate('dd-MM-yyyy', pickedDate)),
+                      color: Colors.green,
+                      textTheme: ButtonTextTheme.primary,
                     ),
                     DropdownButton(
+                      iconEnabledColor: Colors.green,
                       value: _currentChauffeur,
                       items: _dropDownMenuItems,
                       onChanged: changedDropDownItem,
@@ -125,25 +130,31 @@ class _HomeOwner extends State<HomeOwner> {
                 ),
                 InfoCard(
                   vertical: 0.0,
-                  text: _recette_jour + ' DH',
-                  icon: Icons.attach_money,
+                  text: "Num Immatriculation: " + _numImmatriculation,
+                  icon: Icons.local_taxi,
+                  colorText: Colors.black,
+                ),
+                InfoCard(
+                  vertical: 0.0,
+                  text: _recetteJour + ' DH',
+                  icon: Icons.monetization_on,
                   colorText: Colors.teal,
                 ),
                 InfoCard(
                   vertical: 0.0,
-                  text: _km_parcouru + ' KM',
-                  icon: Icons.directions_car,
+                  text: _kmParcouru + ' KM',
+                  icon: Icons.multiline_chart,
                   colorText: Colors.teal,
                 ),
                 InfoCard(
                   vertical: 0.0,
-                  text: _nombre_client,
+                  text: _nombreClient,
                   icon: Icons.people,
                   colorText: Colors.teal,
                 ),
                 InfoCard(
                   vertical: 0.0,
-                  text: _heure_travaille + ' H',
+                  text: _heureTravaille + ' H',
                   icon: Icons.timelapse,
                   colorText: Colors.teal,
                 ),
@@ -190,11 +201,9 @@ class _HomeOwner extends State<HomeOwner> {
       _currentKeyChauffeur = _chauffeurs.keys.firstWhere(
           (k) => _chauffeurs[k] == _currentChauffeur,
           orElse: () => null);
-      FirebaseTodos.getDetailsJournalier(_currentKeyVehicule,
+      FirebaseTodos.getDetailsJournalier(
               _currentKeyChauffeur, pickedDate, _updateDetailsJournalier)
           .then((StreamSubscription s) => _subscriptionTodo = s);
-          
-          
     });
   }
 
@@ -204,7 +213,7 @@ class _HomeOwner extends State<HomeOwner> {
       _currentKeyVehicule = _vehicules.keys.firstWhere(
           (k) => _vehicules[k] == _currentVehicule,
           orElse: () => null);
-      FirebaseTodos.getDetailsJournalier(_currentKeyVehicule,
+      FirebaseTodos.getDetailsJournalier(
               _currentKeyChauffeur, pickedDate, _updateDetailsJournalier)
           .then((StreamSubscription s) => _subscriptionTodo = s);
     });
@@ -220,7 +229,7 @@ class _HomeOwner extends State<HomeOwner> {
     if (picked != null && picked != selectedDate)
       setState(() {
         pickedDate = picked;
-        FirebaseTodos.getDetailsJournalier(_currentKeyVehicule,
+        FirebaseTodos.getDetailsJournalier(
                 _currentKeyChauffeur, picked, _updateDetailsJournalier)
             .then((StreamSubscription s) => _subscriptionTodo = s);
       });
@@ -234,15 +243,15 @@ class _HomeOwner extends State<HomeOwner> {
     });
     return items;
   }
-  
 
   // Alert with single button.
   _onAlertButtonPressed(context) {
     Alert(
       context: context,
-      title: "Chauffeurs " + _drivers[1].toString() + "/" + _drivers[0].toString(),
+      title:
+          "Chauffeurs " + _drivers[1].toString() + "/" + _drivers[0].toString(),
       content: Column(
-        children:_content,
+        children: _content,
       ),
       buttons: [
         DialogButton(
@@ -259,12 +268,13 @@ class _HomeOwner extends State<HomeOwner> {
 
   _updateDetailsJournalier(DetailsJournalier value) {
     setState(() {
-      _consommation_jour = value.consommation_jour;
-      _depense_jour = value.depense_jour;
-      _recette_jour = value.recette_jour;
-      _nombre_client = value.nombre_client;
-      _km_parcouru = value.km_parcouru;
-      _heure_travaille = value.heure_travaille;
+      _consommationJour = value.consommationJour;
+      _depenseJour = value.depenseJour;
+      _recetteJour = value.recetteJour;
+      _nombreClient = value.nombreClient;
+      _kmParcouru = value.kmParcouru;
+      _heureTravaille = value.heureTravaille;
+      _numImmatriculation = value.numImmatriculation;
     });
   }
 
@@ -281,6 +291,7 @@ class _HomeOwner extends State<HomeOwner> {
 
   _updateItems(TodoItems value) {
     setState(() {
+      _childButtons = value.childButtons;
       _drivers = value.nbDrivers;
       _content = value.content;
 
@@ -297,31 +308,48 @@ class _HomeOwner extends State<HomeOwner> {
       _currentKeyVehicule = _vehicules.keys.firstWhere(
           (k) => _vehicules[k] == _currentVehicule,
           orElse: () => null);
-
-      
     });
   }
 }
 
 class DetailsJournalier {
   final String key;
-  String consommation_jour = '0',
-      depense_jour = '0',
-      recette_jour = '0',
-      nombre_client = '0',
-      km_parcouru = '0',
-      heure_travaille = '0';
-  DetailsJournalier.fromJson(this.key, Map data) {
+  String consommationJour = '0',
+      depenseJour = '0',
+      recetteJour = '0',
+      nombreClient = '0',
+      kmParcouru = '0',
+      heureTravaille = '0',
+      numImmatriculation = "0";
+  DetailsJournalier.fromJson(
+      this.key, Map data, String currentKeyChauffeur, String filterDate) {
+    var mapChauffeurs;
     if (data != null) {
-      consommation_jour =
-          (data['consommation_jour'] == null ? '' : data['consommation_jour']);
-      depense_jour = (data['depense_jour'] == null ? '' : data['depense_jour']);
-      recette_jour = (data['recette_jour'] == null ? '' : data['recette_jour']);
-      nombre_client =
-          (data['nombre_client'] == null ? '' : data['nombre_client']);
-      km_parcouru = (data['km_parcouru'] == null ? '' : data['km_parcouru']);
-      heure_travaille =
-          (data['heure_travaille'] == null ? '' : data['heure_travaille']);
+      for (int i = 0; i < data.keys.toList().length; i++) {
+        if (data.values.toList()[i]["vehicule"]["chauffeur"]
+                [currentKeyChauffeur] !=
+            null) {
+          numImmatriculation =
+              data.values.toList()[i]["vehicule"]["num_immatriculation"];
+          mapChauffeurs = data.values.toList()[i]["vehicule"]["chauffeur"]
+              [currentKeyChauffeur];
+          print(mapChauffeurs);
+          print("--------------------------");
+          consommationJour = mapChauffeurs["details_journalier"][filterDate]
+              ["consommation_jour"];
+          depenseJour =
+              mapChauffeurs["details_journalier"][filterDate]["depense_jour"];
+          recetteJour =
+              mapChauffeurs["details_journalier"][filterDate]["recette_jour"];
+          nombreClient =
+              mapChauffeurs["details_journalier"][filterDate]["nombre_client"];
+          kmParcouru =
+              mapChauffeurs["details_journalier"][filterDate]["km_parcouru"];
+          heureTravaille = mapChauffeurs["details_journalier"][filterDate]
+              ["heure_travaille"];
+          break;
+        }
+      }
     }
   }
 }
@@ -335,6 +363,7 @@ class TodoItems {
   int nbChauffeur = 0;
   List<int> nbDrivers = [];
   List<Widget> content = new List();
+  var childButtons = List<UnicornButton>();
   TodoItems.fromJson(this.key, Map data) {
     Map mapChauffeurs;
     for (int i = 0; i < data.keys.toList().length; i++) {
@@ -343,44 +372,54 @@ class TodoItems {
 
       mapChauffeurs = data.values.toList()[i]["vehicule"]["chauffeur"];
       if (mapChauffeurs != null) {
-        nbChauffeur = mapChauffeurs.keys.toList().length;
+        var iconImage;
+        nbChauffeur += mapChauffeurs.keys.toList().length;
         for (int j = 0; j < mapChauffeurs.keys.toList().length; j++) {
           chauffeurs[mapChauffeurs.keys.toList()[j].toString()] =
               mapChauffeurs.values.toList()[j]["nom_chauffeur"];
           actif += mapChauffeurs.values.toList()[j]["statut_chauffeur"];
-          if (mapChauffeurs.values.toList()[j]["statut_chauffeur"] == 1)
-            content.add(
-              new Row(
-                //crossAxisAlignment: CrossAxisAlignment.center,
-                //mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: <Widget>[
-                  Icon(
-                    Icons.lens,
-                    color: Colors.green,
-                  ),
-                  Text('  '+mapChauffeurs.values.toList()[j]["nom_chauffeur"])
-                ],
-              ),
-            );
+          if (mapChauffeurs.values.toList()[j]["photo_chauffeur"] == null ||
+              mapChauffeurs.values
+                  .toList()[j]["photo_chauffeur"]
+                  .toString()
+                  .isEmpty)
+            iconImage = new Icon(Icons.person_pin);
           else
-             content.add(
-              new Row(
-                //crossAxisAlignment: CrossAxisAlignment.center,
-                //mainAxisAlignment: MainAxisAlignment.start,
-                children: <Widget>[
-                  Icon(
-                    Icons.lens,
-                    color: Colors.red,
-                  ),
-                  Text('  '+mapChauffeurs.values.toList()[j]["nom_chauffeur"])
-                ],
-              ),
-            );
+            iconImage = new Image.asset(
+                mapChauffeurs.values.toList()[j]["photo_chauffeur"]);
+          if (mapChauffeurs.values.toList()[j]["statut_chauffeur"] == 1)
+            childButtons.add(UnicornButton(
+                hasLabel: true,
+                labelText: mapChauffeurs.values.toList()[j]["nom_chauffeur"],
+                currentButton: FloatingActionButton(
+                  heroTag: "1",
+                  backgroundColor: Colors.grey,
+                  mini: true,
+                  child: Badge(
+                      badgeColor: Colors.greenAccent,
+                      badgeContent: Text(' '),
+                      child: iconImage),
+                  onPressed: () {},
+                )));
+          else
+            childButtons.add(UnicornButton(
+                hasLabel: true,
+                labelText: mapChauffeurs.values.toList()[j]["nom_chauffeur"],
+                currentButton: FloatingActionButton(
+                  heroTag: "0",
+                  backgroundColor: Colors.redAccent,
+                  mini: true,
+                  child: Badge(
+                      badgeColor: Colors.redAccent,
+                      badgeContent: Text(' '),
+                      child: iconImage),
+                  onPressed: () {},
+                )));
         }
-        nbDrivers.add(nbChauffeur);
-        nbDrivers.add(actif);
       }
     }
+    nbDrivers.add(nbChauffeur);
+    nbDrivers.add(actif);
   }
 }
 
@@ -393,9 +432,6 @@ class FirebaseTodos {
         .child("proprietaire")
         .child(accountKey)
         .child("agreement")
-        //.child("agr1")
-        // .child("vehicule")
-        //.child("chauffeur")
         .orderByKey()
         .onValue
         .listen((Event event) {
@@ -408,7 +444,6 @@ class FirebaseTodos {
   }
 
   static Future<StreamSubscription<Event>> getDetailsJournalier(
-      String currentKeyAgreement,
       String currentKeyChauffeur,
       DateTime filterDate,
       void onData(DetailsJournalier todo)) async {
@@ -418,16 +453,13 @@ class FirebaseTodos {
         .child("proprietaire")
         .child(accountKey)
         .child("agreement")
-        .child(currentKeyAgreement)
-        .child("vehicule")
-        .child("chauffeur")
-        .child(currentKeyChauffeur) //.child(await getCurrentUid())
-        .child("details_journalier")
-        .child(_HomeOwner().formatDate('dd_MM_yyyy', filterDate))
         .onValue
         .listen((Event event) {
       var todo = new DetailsJournalier.fromJson(
-          event.snapshot.key, event.snapshot.value);
+          event.snapshot.key,
+          event.snapshot.value,
+          currentKeyChauffeur,
+          _HomeOwner().formatDate('dd_MM_yyyy', filterDate));
 
       onData(todo);
     });
@@ -450,7 +482,7 @@ class Preferences {
     String accountKey = prefs.getString(ACCOUNT_KEY);
     // workaround - simulate a login setting this
     if (accountKey == null) {
-      accountKey = "21YOLwa4ITRAdUNy824AfkHBRZ23";
+      accountKey = await getCurrentUid();
     }
 
     return accountKey;

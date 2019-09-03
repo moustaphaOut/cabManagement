@@ -48,12 +48,12 @@ class _TrafficDriver extends State<TrafficDriver> {
       });
   }
 
-  String _consommation_jour = "",
-      _depense_jour = "",
-      _recette_jour = "",
-      _nombre_client = "",
-      _km_parcouru = "",
-      _heure_travaille = "";
+  String _consommationJour = "0",
+      _depenseJour = "0",
+      _recetteJour = "0",
+      _nombreClient = "0",
+      _kmParcouru = "0",
+      _heureTravaille = "0";
   StreamSubscription _subscriptionTodo;
   @override
   void initState() {
@@ -122,25 +122,25 @@ class _TrafficDriver extends State<TrafficDriver> {
                       ]),
                   InfoCard(
                     vertical: 0.0,
-                    text: _recette_jour + ' DH',
+                    text: _recetteJour + ' DH',
                     icon: Icons.attach_money,
                     colorText: Colors.teal,
                   ),
                   InfoCard(
                     vertical: 0.0,
-                    text: _km_parcouru + ' KM',
+                    text: _kmParcouru + ' KM',
                     icon: Icons.directions_car,
                     colorText: Colors.teal,
                   ),
                   InfoCard(
                     vertical: 0.0,
-                    text: _nombre_client,
+                    text: _nombreClient,
                     icon: Icons.people,
                     colorText: Colors.teal,
                   ),
                   InfoCard(
                     vertical: 0.0,
-                    text:  _heure_travaille + ' H',
+                    text:  _heureTravaille + ' H',
                     icon: Icons.timelapse,
                     colorText: Colors.teal,
                   ),
@@ -180,12 +180,12 @@ class _TrafficDriver extends State<TrafficDriver> {
  
   _updateDetailsJournalier(DetailsJournalier value) {
     setState(() {
-      _consommation_jour = value.consommation_jour;
-      _depense_jour = value.depense_jour;
-      _recette_jour = value.recette_jour;
-      _nombre_client = value.nombre_client;
-      _km_parcouru = value.km_parcouru;
-      _heure_travaille = value.heure_travaille;
+      _consommationJour = value.consommationJour;
+      _depenseJour = value.depenseJour;
+      _recetteJour = value.recetteJour;
+      _nombreClient = value.nombreClient;
+      _kmParcouru = value.kmParcouru;
+      _heureTravaille = value.heureTravaille;
     });
   }
    String getCurrentDate(String format) {
@@ -201,22 +201,22 @@ class _TrafficDriver extends State<TrafficDriver> {
 
 class DetailsJournalier {
   final String key;
-  String consommation_jour ='0',
-      depense_jour='0',
-      recette_jour='0',
-      nombre_client='0',
-      km_parcouru='0',
-      heure_travaille='0';
+  String consommationJour = '0',
+      depenseJour = '0',
+      recetteJour = '0',
+      nombreClient = '0',
+      kmParcouru = '0',
+      heureTravaille = '0';
   DetailsJournalier.fromJson(this.key, Map data) {
     if(data != null){
-      consommation_jour =
+      consommationJour =
           (data['consommation_jour'] == null ? '' : data['consommation_jour']);
-      depense_jour = (data['depense_jour'] == null ? '' : data['depense_jour']);
-      recette_jour = (data['recette_jour'] == null ? '' : data['recette_jour']);
-      nombre_client =
+      depenseJour = (data['depense_jour'] == null ? '' : data['depense_jour']);
+      recetteJour = (data['recette_jour'] == null ? '' : data['recette_jour']);
+      nombreClient =
           (data['nombre_client'] == null ? '' : data['nombre_client']);
-      km_parcouru = (data['km_parcouru'] == null ? '' : data['km_parcouru']);
-      heure_travaille =
+      kmParcouru = (data['km_parcouru'] == null ? '' : data['km_parcouru']);
+      heureTravaille =
           (data['heure_travaille'] == null ? '' : data['heure_travaille']);
     }
   }
