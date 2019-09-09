@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:gestion_taxi/driver/home_page.dart';
 import 'package:gestion_taxi/driver/traffic_page.dart';
+import 'package:gestion_taxi/model/Colors.dart';
+import 'package:rflutter_alert/rflutter_alert.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../update_field_dialog.dart';
@@ -30,12 +32,13 @@ class _ProfileDriver extends State<ProfileDriver> {
       _telephone_chauffeur = "",
       _date_naissance_chauffeur = "";
   StreamSubscription _subscriptionTodo;
- @override
+  @override
   void initState() {
     //FirebaseTodos.getTodo("-KriJ8Sg4lWIoNswKWc4").then(_updateTodo);
     FirebaseTodos.getChauffeur(_updateChauffeur)
         .then((StreamSubscription s) => _subscriptionTodo = s);
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -43,11 +46,11 @@ class _ProfileDriver extends State<ProfileDriver> {
         backgroundColor: Color.fromRGBO(255, 0, 0, 0.7),
         title: Text('Profile'),
         actions: <Widget>[
-              new IconButton(
-                icon: new Icon(Icons.outlined_flag),
-                onPressed: () => _signOut(),
-              ),
-            ],
+          new IconButton(
+            icon: new Icon(Icons.outlined_flag),
+            onPressed: () => _onAlertButtonPressed(context),
+          ),
+        ],
       ),
       body: Container(
         child: Center(
@@ -58,7 +61,8 @@ class _ProfileDriver extends State<ProfileDriver> {
                 radius: 30,
                 backgroundImage: AssetImage(photo),
               ),
-              Text(
+              Center(
+                  child: Text(
                 _prenom_chauffeur + " " + _nom_chauffeur,
                 style: TextStyle(
                   fontSize: 20.0,
@@ -66,17 +70,7 @@ class _ProfileDriver extends State<ProfileDriver> {
                   fontWeight: FontWeight.bold,
                   fontFamily: 'Pacifico',
                 ),
-              ),
-              Text(
-                job,
-                style: TextStyle(
-                  fontFamily: 'Source Sans Pro',
-                  fontSize: 10.0,
-                  color: Colors.teal[50],
-                  letterSpacing: 2.5,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              )),
               SizedBox(
                 height: 20,
                 width: 200,
@@ -107,7 +101,7 @@ class _ProfileDriver extends State<ProfileDriver> {
                 colorText: Colors.teal,
                 icon: Icons.calendar_today,
                 onPressed: () => showEditWidget(
-                     _date_naissance_chauffeur, "date_naissance_chauffeur"),
+                    _date_naissance_chauffeur, "date_naissance_chauffeur"),
               ),
             ],
           ),
@@ -131,35 +125,80 @@ class _ProfileDriver extends State<ProfileDriver> {
         currentIndex: 2,
         onTap: (currentIndex) {
           if (currentIndex == 0)
-            Navigator.of(context).pushNamedAndRemoveUntil(HomeDriver.tag,(Route<dynamic> route) => false);
+            Navigator.of(context).pushNamedAndRemoveUntil(
+                HomeDriver.tag, (Route<dynamic> route) => false);
           else if (currentIndex == 1)
-            Navigator.of(context).pushNamedAndRemoveUntil(TrafficDriver.tag,(Route<dynamic> route) => false);
+            Navigator.of(context).pushNamedAndRemoveUntil(
+                TrafficDriver.tag, (Route<dynamic> route) => false);
           //Navigator.of(context).pushNamed(Profile.tag);
         },
         selectedItemColor: Colors.amber[800],
       ),
-       backgroundColor: Colors.teal[200],
-       
+      backgroundColor: Colors.teal[200],
     );
   }
+
+  _onAlertButtonPressed(context) {
+    Alert(
+      context: context,
+      //type: AlertType.warning,
+      title: "Logout ?",
+      style: AlertStyle(
+        animationType: AnimationType.fromTop,
+        isCloseButton: false,
+        animationDuration: Duration(milliseconds: 600),
+        alertBorder: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(30.0),
+          side: BorderSide(
+            color: primary,
+          ),
+        ),
+      ),
+      //desc: "Flutter is more awesome with RFlutter Alert.",
+      buttons: [
+        DialogButton(
+          child: Text(
+            "Cancel",
+            style: TextStyle(color: primaryDark, fontSize: 20),
+          ),
+          onPressed: () => Navigator.pop(context),
+          color: Color.fromRGBO(255, 255, 255, 1.0),
+        ),
+        DialogButton(
+          radius: BorderRadius.circular(30.0),
+          child: Text(
+            "Sure",
+            style: TextStyle(color: Colors.white, fontSize: 20),
+          ),
+          onPressed: () => _signOut(),
+          gradient: LinearGradient(colors: [primaryDark, primaryDark]),
+        )
+      ],
+    ).show();
+  }
+
   Future<void> _signOut() async {
     await FirebaseAuth.instance.signOut();
-    Navigator.of(context).pushNamedAndRemoveUntil(LoginPage.tag,(Route<dynamic> route) => false);
+    Navigator.of(context).pushNamedAndRemoveUntil(
+        LoginPage.tag, (Route<dynamic> route) => false);
   }
-Future<String> getCurrentEmail() async {
-  FirebaseUser user = await FirebaseAuth.instance.currentUser();
-  return user.email;
-}
- Future<String> getCurrentUid() async {
-  FirebaseUser user = await FirebaseAuth.instance.currentUser();
-  String uid = user.uid;
-  return uid;
-}
-  showEditWidget( String currentData, String attributeName) {
+
+  Future<String> getCurrentEmail() async {
+    FirebaseUser user = await FirebaseAuth.instance.currentUser();
+    return user.email;
+  }
+
+  Future<String> getCurrentUid() async {
+    FirebaseUser user = await FirebaseAuth.instance.currentUser();
+    String uid = user.uid;
+    return uid;
+  }
+
+  showEditWidget(String currentData, String attributeName) {
     showDialog(
       context: context,
-      builder: (BuildContext context) =>
-          new UpdateFieldDialog().buildAboutDialog(context, attributeName, currentData),
+      builder: (BuildContext context) => new UpdateFieldDialog()
+          .buildAboutDialog(context, attributeName, currentData),
     );
   }
 
@@ -190,9 +229,8 @@ class TodoChauffeur {
         (data['email_chauffeur'] == null ? '' : data['email_chauffeur']);
     nom_chauffeur =
         (data['nom_chauffeur'] == null ? '' : data['nom_chauffeur']);
-    prenom_chauffeur = (data['prenom_chauffeur'] == null
-        ? ''
-        : data['prenom_chauffeur']);
+    prenom_chauffeur =
+        (data['prenom_chauffeur'] == null ? '' : data['prenom_chauffeur']);
     telephone_chauffeur = (data['telephone_chauffeur'] == null
         ? ''
         : data['telephone_chauffeur']);
@@ -217,11 +255,11 @@ class FirebaseTodos {
         .child("agr1")
         .child("vehicule")
         .child("chauffeur")
-        .child("cha1")//.child(await getCurrentUid())
+        .child("cha1") //.child(await getCurrentUid())
         .onValue
         .listen((Event event) {
-      var todo = new TodoChauffeur.fromJson(
-          event.snapshot.key, event.snapshot.value);
+      var todo =
+          new TodoChauffeur.fromJson(event.snapshot.key, event.snapshot.value);
       onData(todo);
     });
 

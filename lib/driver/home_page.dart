@@ -1,10 +1,14 @@
 import 'dart:async';
+import 'dart:io';
+import 'package:gestion_taxi/model/Colors.dart';
+//import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../widgets/info_card.dart';
+//import 'package:flutter_sparkline/flutter_sparkline.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import './profile_page.dart';
 import './traffic_page.dart';
 
@@ -17,8 +21,9 @@ class HomeDriver extends StatefulWidget {
 }
 
 class _HomeDriver extends State<HomeDriver> {
+  File sampleImage;
   //var now = formatDate(DateTime(2019, 08, 29), [dd, '_', mm, '_', yyyy]);
-  String  _consommationJour = "0",
+  String _consommationJour = "0",
       _depenseJour = "0",
       _recetteJour = "0",
       _nombreClient = "0",
@@ -31,101 +36,226 @@ class _HomeDriver extends State<HomeDriver> {
         .then((StreamSubscription s) => _subscriptionTodo = s);
   }
 
+  static final List<String> chartDropdownItems = [
+    'Last 7 days',
+    'Last month',
+    'Last year'
+  ];
+  String actualDropdown = chartDropdownItems[0];
+  int actualChart = 0;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Color.fromRGBO(255, 0, 0, 0.7),
-        leading: IconButton(
-          icon: Icon(
-            Icons.bluetooth,
-          ),
-          onPressed: () {},
-        ),
-        title: Text('Connected'),
-        actions: <Widget>[
-          Center(
-            child: new Text("Riding"),
-          ),
-          new IconButton(
-            icon: new Icon(Icons.check),
-            onPressed: () => {},
-          ),
-        ],
-      ),
-      body: Container(
-        margin: EdgeInsets.symmetric(vertical: 2.0, horizontal: 7.0),
-        child: ListView(
-          children: [
-            Text(
-              "Message",
-              textAlign: TextAlign.center,
-              style: TextStyle(fontWeight: FontWeight.bold),
+      body: NestedScrollView(
+        headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
+          return <Widget>[
+            SliverAppBar(
+              expandedHeight: 200.0,
+              pinned: false,
+              backgroundColor: primary,
+              floating: true,
+              flexibleSpace: FlexibleSpaceBar(
+                  centerTitle: true,
+                  title: Text(
+                      DateFormat('EEEE').format(new DateTime.now()) +
+                          ': ' +
+                          getCurrentDate('dd/MM/yyyy'),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20.0,
+                      )),
+                  background: Image.network(
+                    "https://images4.alphacoders.com/590/590571.jpg?auto=compress&cs=tinysrgb&h=350",
+                    fit: BoxFit.cover,
+                  )),
             ),
-            Container(
-              margin: EdgeInsets.all(5.0),
-              padding: EdgeInsets.all(10.0),
-              alignment: Alignment.topCenter,
-              decoration: BoxDecoration(
-                color: Colors.grey[200],
-                border: Border.all(),
-              ),
-              child: Column(
-                children: [
-                  Text("Everything is going fine",
-                      style: TextStyle(fontSize: 18, color: Colors.green)),
-                  Text("Enable your bluetooth",
-                      style: TextStyle(fontSize: 18, color: Colors.red)),
-                ],
-              ),
-            ),
-            Divider(),
-            Container(
-              margin: EdgeInsets.all(0.0),
-              padding: EdgeInsets.all(0.0),
-              alignment: Alignment.topCenter,
-              decoration: BoxDecoration(),
-              child: Column(children: [
-                new Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+          ];
+        },
+        body: StaggeredGridView.count(
+          crossAxisCount: 2,
+          crossAxisSpacing: 12.0,
+          mainAxisSpacing: 12.0,
+          padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          children: <Widget>[
+            _buildTile(
+              Padding(
+                padding: const EdgeInsets.all(20.0), // par %
+                child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: <Widget>[
-                      new Text(
-                        "Today",
-                        style: TextStyle(
-                            fontSize: 15.0, fontWeight: FontWeight.w800),
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text('Alerts',
+                              style: TextStyle(color: Colors.blueAccent)),
+                          Text('0',
+                              style: TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 34.0))
+                        ],
                       ),
-                      new Text(
-                        getCurrentDate('dd-MM-yyyy'),
-                        style: TextStyle(fontSize: 15.0),
-                      ),
+                      Material(
+                          color: Colors.amber,
+                          borderRadius: BorderRadius.circular(24.0),
+                          child: Center(
+                              child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Icon(Icons.notifications,
+                                color: Colors.white, size: 30.0),
+                          )))
                     ]),
-                InfoCard(
-                  vertical: 0.0,
-                  text: _recetteJour + ' DH',
-                  icon: Icons.attach_money,
-                  colorText: Colors.teal,
-                ),
-                InfoCard(
-                  vertical: 0.0,
-                  text: _kmParcouru + ' KM',
-                  icon: Icons.directions_car,
-                  colorText: Colors.teal,
-                ),
-                InfoCard(
-                  vertical: 0.0,
-                  text: _nombreClient,
-                  icon: Icons.people,
-                  colorText: Colors.teal,
-                ),
-                InfoCard(
-                  vertical: 0.0,
-                  text: _heureTravaille + ' H',
-                  icon: Icons.timelapse,
-                  colorText: Colors.teal,
-                ),
-              ]),
+              ),
             ),
-            //Divider(),
+            _buildTile(
+              Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Material(
+                          color: Colors.blue,
+                          shape: CircleBorder(),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Icon(Icons.timeline,
+                                color: Colors.white, size: 30.0),
+                          )),
+                      Padding(padding: EdgeInsets.only(bottom: 16.0)),
+                      Text(_recetteJour + ' DH',
+                          style: TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 24.0)),
+                      Text('Recette', style: TextStyle(color: Colors.black45)),
+                    ]),
+              ),
+            ),
+            _buildTile(
+              Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Material(
+                          color: Colors.teal,
+                          shape: CircleBorder(),
+                          child: Padding(
+                            padding: EdgeInsets.all(16.0),
+                            child: Icon(Icons.people,
+                                color: Colors.white, size: 30.0),
+                          )),
+                      Padding(padding: EdgeInsets.only(bottom: 16.0)),
+                      Text(_nombreClient,
+                          style: TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 24.0)),
+                      Text('Clients', style: TextStyle(color: Colors.black45)),
+                    ]),
+              ),
+            ),
+            _buildTile(
+              Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text('Heure travaille',
+                              style: TextStyle(color: Colors.redAccent)),
+                          Text(_heureTravaille + ' H',
+                              style: TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 34.0))
+                        ],
+                      ),
+                      Material(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(24.0),
+                          child: Center(
+                              child: Padding(
+                            padding: EdgeInsets.all(16.0),
+                            child: Icon(Icons.timelapse,
+                                color: Colors.white, size: 30.0),
+                          )))
+                    ]),
+              ),
+              // onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => ShopItemsPage())),
+            ),
+            _buildTile(
+              Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Material(
+                          color: Colors.black,
+                          shape: CircleBorder(),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Text('KM',
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 24.0)),
+                          )),
+                      Padding(padding: EdgeInsets.only(bottom: 15.0)),
+                      Text(_kmParcouru,
+                          style: TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 24.0)),
+                      Text('Parcouru', style: TextStyle(color: Colors.black45)),
+                    ]),
+              ),
+            ),
+            _buildTile(
+              Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Material(
+                          color: Colors.black,
+                          shape: CircleBorder(),
+                          child: Padding(
+                            padding: EdgeInsets.all(16.0),
+                            child: Icon(Icons.local_gas_station,
+                                color: Colors.white, size: 30.0),
+                          )),
+                      Padding(padding: EdgeInsets.only(bottom: 16.0)),
+                      Text(_consommationJour + ' DH',
+                          style: TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 24.0)),
+                      Text('Consommatio',
+                          style: TextStyle(color: Colors.black45)),
+                    ]),
+              ),
+              // onTap : getImage,
+            ),
+          ],
+          staggeredTiles: [
+            StaggeredTile.extent(2, 110.0),
+            StaggeredTile.extent(1, 180.0),
+            StaggeredTile.extent(1, 180.0),
+            StaggeredTile.extent(2, 110.0),
+            StaggeredTile.extent(1, 180.0),
+            StaggeredTile.extent(1, 180.0),
           ],
         ),
       ),
@@ -157,6 +287,25 @@ class _HomeDriver extends State<HomeDriver> {
         selectedItemColor: Colors.amber[800],
       ),
     );
+  }
+
+  Widget _buildTile(Widget child, {Function() onTap}) {
+    return Material(
+        elevation: 14.0,
+        borderRadius: BorderRadius.circular(12.0),
+        shadowColor: primary,
+        child: InkWell(
+            // Do onTap() if it isn't null, otherwise do print()
+            onTap: () {getImage();},
+            child: child));
+  }
+
+  Future getImage() async {
+    /*await ImagePicker.pickImage(source: ImageSource.gallery).then((image) {
+      setState(() {
+        sampleImage = image;
+      });
+    });*/
   }
 
   _updateDetailsJournalier(DetailsJournalier value) {
@@ -215,6 +364,7 @@ class FirebaseTodos {
         .child("cha1") //.child(await getCurrentUid())
         .child("details_journalier")
         .child(_HomeDriver().getCurrentDate('dd_MM_yyyy'))
+        // .child('27_08_2019')
         .onValue
         .listen((Event event) {
       var todo = new DetailsJournalier.fromJson(

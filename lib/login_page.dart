@@ -1,11 +1,15 @@
+//MediaQuery.of(context).size.width * 0.65
 import 'dart:io';
 
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import './driver/home_page.dart';
 import './owner/home_page.dart';
+import 'package:modal_progress_hud/modal_progress_hud.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
+
+import 'model/Colors.dart';
 
 class LoginPage extends StatefulWidget {
   static String tag = 'login-page';
@@ -26,6 +30,7 @@ class _LoginPageState extends State<LoginPage> {
   String _errorEmail = 'Provide an email';
   String _email, _password;
 
+  bool _saving = false;
 //
   String phoneNumber;
   String smsCode;
@@ -34,82 +39,102 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
-      body: DefaultTabController(
-        length: 2,
-        child: Scaffold(
-          appBar: AppBar(
-            backgroundColor: Colors.red,
-            bottom: TabBar(
-              indicatorColor: Colors.green[400],
-              tabs: [
-                Tab(text: "Email"),
-                Tab(text: "Phone"),
-              ],
+      backgroundColor: primaryDark,
+      body: ModalProgressHUD(
+        color: primary,
+        inAsyncCall: _saving,
+        child: Center(
+          child: Card(
+            margin: EdgeInsets.all(percentageSize(context, 8)),
+            elevation: 8,
+            color: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30.0),
             ),
-            title: Text('Login'),
-          ),
-          body: TabBarView(
-            children: [
-              Padding(
-                padding: EdgeInsets.all(8.0),
-                child: Container(
-                  child: Center(
-                    child: Form(
-                      key: _formKey,
-                      child: ListView(
-                        shrinkWrap: true,
-                        padding: EdgeInsets.only(left: 24.0, right: 24.0),
-                        children: <Widget>[
-                          Hero(
-                            tag: 'hero',
-                            child: CircleAvatar(
-                              backgroundColor: Colors.transparent,
-                              radius: 48.0,
-                              child: Image.asset('assets/logo.png'),
-                            ),
-                          ),
-                          TextFormField(
-                            validator: (input) {
-                              if (input.isEmpty) {
-                                return _errorEmail;
-                              }
-                            },
-                            decoration: InputDecoration(labelText: 'Email'),
-                            onSaved: (input) => _email = input,
-                          ),
-                          TextFormField(
-                            validator: (input) {
-                              if (input.length < 6) {
-                                return 'Longer password please';
-                              }
-                            },
-                            decoration: InputDecoration(labelText: 'Password'),
-                            onSaved: (input) => _password = input,
-                            obscureText: true,
-                          ),
-                          RaisedButton(
-                            color: Colors.green,
-                            onPressed: () async {
-                              if (_formKey.currentState.validate())
-                                _signInWithEmailAndPassword();
-                            },
-                            child: Text('Sign in'),
-                          ),
-                          Container(
-                            alignment: Alignment.center,
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: Text(
-                              _errorLogin,
-                              style: TextStyle(color: Colors.red),
-                            ),
-                          ),
-                        ],
-                      ),
+            child: Form(
+              key: _formKey,
+              child: ListView(
+                shrinkWrap: true,
+                padding: EdgeInsets.only(left: 30.0, right: 30.0,bottom: 20),
+                children: <Widget>[
+                  Hero(
+                    tag: 'hero',
+                    child: CircleAvatar(
+                      backgroundColor: Colors.transparent,
+                      radius: 48.0,
+                      child: Image.asset('assets/logo.png'),
                     ),
                   ),
-                ),
+                  TextFormField(
+                    validator: (input) {
+                      if (input.isEmpty) {
+                        return _errorEmail;
+                      }
+                    },
+                    decoration: InputDecoration(
+                      contentPadding: new EdgeInsets.symmetric(
+                          vertical: 10.0, horizontal: 10),
+                      hintText: 'Email',
+                      prefixIcon: Icon(Icons.email, color: primaryLight),
+                      border: OutlineInputBorder(
+                          borderRadius:
+                              BorderRadius.all(new Radius.circular(30.0))),
+                    ),
+                    onSaved: (input) => _email = input,
+                    //textInputAction: TextInputAction.continueAction,//only for ios
+                    keyboardType: TextInputType.emailAddress,
+                  ),
+                  TextFormField(
+                    validator: (input) {
+                      if (input.length < 6) {
+                        return 'Longer password please';
+                      }
+                    },
+                    decoration: InputDecoration(
+                      focusColor: Colors.redAccent,
+                      hoverColor: Colors.greenAccent,
+                      contentPadding: new EdgeInsets.symmetric(
+                          vertical: 10.0, horizontal: 10),
+                      hintText: 'Password',
+                      prefixIcon: Icon(Icons.lock, color: primaryLight),
+                      border: OutlineInputBorder(
+                          borderRadius:
+                              BorderRadius.all(new Radius.circular(30.0))),
+                    ),
+                    onSaved: (input) => _password = input,
+                    obscureText: true,
+                    textInputAction: TextInputAction.send,
+                  ),
+                  RaisedButton(
+                    color: primary,
+                    onPressed: () async {
+                      if (_formKey.currentState.validate())
+                        _signInWithEmailAndPassword();
+                    },
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30.0),
+                    ),
+                    child: Text(
+                      'Sign in',
+                      style: TextStyle(color: Colors.white, fontSize: 20),
+                    ),
+                  ),
+                  Container(
+                    alignment: Alignment.center,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Text(
+                      _errorLogin,
+                      style: TextStyle(color: errorMessage),
+                    ),
+                  ),
+                ],
               ),
-              Padding(
+            ),
+          ),
+        ),
+      ),
+    );
+    /*Padding(
                 padding: EdgeInsets.all(8.0),
                 child: Container(
                   child: Center(
@@ -153,13 +178,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          backgroundColor: Colors.red[50],
-        ),
-      ),
-    );
+              ),*/
   }
 
   void _signInWithEmailAndPassword() async {
@@ -222,6 +241,9 @@ class _LoginPageState extends State<LoginPage> {
       print('The error is $errorType');
     });
     if (user != null) {
+      setState(() {
+        _saving = true;
+      });
       FirebaseUser currentUser = await FirebaseAuth.instance.currentUser();
       var ref = FirebaseDatabase.instance
           .reference()
@@ -238,7 +260,7 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  //---------------
+  /*
   Future<void> _submit() async {
     final PhoneCodeAutoRetrievalTimeout autoRetrievalTimeout = (String verId) {
       this.verificationCode = verId;
@@ -294,7 +316,6 @@ class _LoginPageState extends State<LoginPage> {
                     } else {
                       print('else:hello');
                       Navigator.of(context).pop();
-                      //signIn();
                     }
                   });
                 },
@@ -302,13 +323,5 @@ class _LoginPageState extends State<LoginPage> {
             ],
           );
         });
-  }
-
-  signIn() {
-    /*FirebaseAuth.instance
-        .signInWithPhoneNumber(
-            verificationId: verificationCode, smsCode: smsCode)
-        .then((user) => Navigator.of(context).pushNamed(HomeOwner.tag))
-        .catchError((e) => print(e));*/
-  }
+  }*/
 }

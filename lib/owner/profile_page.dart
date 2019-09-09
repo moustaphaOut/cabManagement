@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:gestion_taxi/login_page.dart';
+import 'package:gestion_taxi/model/Colors.dart';
+import 'package:rflutter_alert/rflutter_alert.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -86,7 +88,6 @@ class _ProfileOwner extends State<ProfileOwner> {
             backgroundColor: Color(0xfff00000),
             //backgroundColor: Color(0xff308e1c),
             bottom: TabBar(
-              
               indicatorColor: Color(0xffff00000),
               tabs: [
                 Tab(icon: new Icon(Icons.account_circle)),
@@ -99,7 +100,7 @@ class _ProfileOwner extends State<ProfileOwner> {
             actions: <Widget>[
               new IconButton(
                 icon: new Icon(Icons.outlined_flag),
-                onPressed: () => _signOut(),
+                onPressed: () => _onAlertButtonPressed(context),
               ),
             ],
           ),
@@ -116,7 +117,8 @@ class _ProfileOwner extends State<ProfileOwner> {
                           radius: 30,
                           backgroundImage: AssetImage(photo),
                         ),
-                        Text(
+                        Center(
+                            child: Text(
                           _prenomProprietaire + " " + _nomProprietaire,
                           style: TextStyle(
                             fontSize: 20.0,
@@ -124,17 +126,7 @@ class _ProfileOwner extends State<ProfileOwner> {
                             fontWeight: FontWeight.bold,
                             fontFamily: 'Pacifico',
                           ),
-                        ),
-                        Text(
-                          job,
-                          style: TextStyle(
-                            fontFamily: 'Source Sans Pro',
-                            fontSize: 10.0,
-                            color: Colors.teal[50],
-                            letterSpacing: 2.5,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        )),
                         SizedBox(
                           height: 20,
                           width: 200,
@@ -189,7 +181,11 @@ class _ProfileOwner extends State<ProfileOwner> {
                       children: <Widget>[
                         new Row(
                           children: <Widget>[
-                            Text("Num Immatriculation: ",style: TextStyle(fontSize: 15.0,color: Colors.redAccent),),
+                            Text(
+                              "Num Immatriculation: ",
+                              style: TextStyle(
+                                  fontSize: 15.0, color: Colors.redAccent),
+                            ),
                             DropdownButton(
                               iconEnabledColor: Colors.greenAccent,
                               value: _currentAgreement,
@@ -360,6 +356,45 @@ class _ProfileOwner extends State<ProfileOwner> {
         ),
       ),
     );
+  }
+
+  _onAlertButtonPressed(context) {
+    Alert(
+      context: context,
+      //type: AlertType.warning,
+      title: "Logout ?",
+      style: AlertStyle(
+        animationType: AnimationType.fromTop,
+        animationDuration: Duration(milliseconds: 600),
+        isCloseButton: false,
+        alertBorder: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(30.0),
+          side: BorderSide(
+            color: primary,
+          ),
+        ),
+      ),
+      //desc: "Flutter is more awesome with RFlutter Alert.",
+      buttons: [
+        DialogButton(
+          child: Text(
+            "Cancel",
+            style: TextStyle(color: primaryDark, fontSize: 20),
+          ),
+          onPressed: () => Navigator.pop(context),
+          color: Color.fromRGBO(255, 255, 255, 1.0),
+        ),
+        DialogButton(
+          radius: BorderRadius.circular(30.0),
+          child: Text(
+            "Sure",
+            style: TextStyle(color: Colors.white, fontSize: 20),
+          ),
+          onPressed: () => _signOut(),
+          gradient: LinearGradient(colors: [primaryDark, primaryDark]),
+        )
+      ],
+    ).show();
   }
 
   List<DropdownMenuItem<String>> getDropDownMenuItems(ss) {
@@ -556,25 +591,29 @@ class TodoVehicule {
 
 class TodoChauffeur {
   final String key;
-  String cinChauffeur,
-      emailChauffeur,
-      nomChauffeur,
-      prenomChauffeur,
-      telephoneChauffeur,
-      dateNaissanceChauffeur;
+  String cinChauffeur = " ",
+      emailChauffeur = " ",
+      nomChauffeur = " ",
+      prenomChauffeur = " ",
+      telephoneChauffeur = " ",
+      dateNaissanceChauffeur = " ";
   TodoChauffeur.fromJson(this.key, Map data) {
-    cinChauffeur = (data['cin_chauffeur'] == null ? '' : data['cin_chauffeur']);
-    emailChauffeur =
-        (data['email_chauffeur'] == null ? '' : data['email_chauffeur']);
-    nomChauffeur = (data['nom_chauffeur'] == null ? '' : data['nom_chauffeur']);
-    prenomChauffeur =
-        (data['prenom_chauffeur'] == null ? '' : data['prenom_chauffeur']);
-    telephoneChauffeur = (data['telephone_chauffeur'] == null
-        ? ''
-        : data['telephone_chauffeur']);
-    dateNaissanceChauffeur = (data['date_naissance_chauffeur'] == null
-        ? ''
-        : data['date_naissance_chauffeur']);
+    if (data != null) {
+      cinChauffeur =
+          (data['cin_chauffeur'] == null ? '' : data['cin_chauffeur']);
+      emailChauffeur =
+          (data['email_chauffeur'] == null ? '' : data['email_chauffeur']);
+      nomChauffeur =
+          (data['nom_chauffeur'] == null ? '' : data['nom_chauffeur']);
+      prenomChauffeur =
+          (data['prenom_chauffeur'] == null ? '' : data['prenom_chauffeur']);
+      telephoneChauffeur = (data['telephone_chauffeur'] == null
+          ? ''
+          : data['telephone_chauffeur']);
+      dateNaissanceChauffeur = (data['date_naissance_chauffeur'] == null
+          ? ''
+          : data['date_naissance_chauffeur']);
+    }
   }
 }
 
