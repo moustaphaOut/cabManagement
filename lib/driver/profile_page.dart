@@ -30,7 +30,7 @@ class _ProfileDriver extends State<ProfileDriver> {
       _nom_chauffeur = "",
       _prenom_chauffeur = "",
       _telephone_chauffeur = "",
-      _date_naissance_chauffeur = "";
+      _date_naissance_chauffeur = "",_horaireTravail="";
   StreamSubscription _subscriptionTodo;
   @override
   void initState() {
@@ -47,7 +47,7 @@ class _ProfileDriver extends State<ProfileDriver> {
         title: Text('Profile'),
         actions: <Widget>[
           new IconButton(
-            icon: new Icon(Icons.outlined_flag),
+            icon: new Icon(Icons.exit_to_app),
             onPressed: () => _onAlertButtonPressed(context),
           ),
         ],
@@ -79,8 +79,14 @@ class _ProfileDriver extends State<ProfileDriver> {
                 ),
               ),
               InfoCard(
-                text: _cin_chauffeur,
+                text: _horaireTravail,
                 icon: Icons.web,
+                colorText: Colors.teal,
+                onPressed: () {},
+              ),
+              InfoCard(
+                text: _cin_chauffeur,
+                icon: Icons.assignment_ind,
                 colorText: Colors.teal,
                 onPressed: () {},
               ),
@@ -210,6 +216,7 @@ class _ProfileDriver extends State<ProfileDriver> {
       _prenom_chauffeur = value.prenom_chauffeur;
       _telephone_chauffeur = value.telephone_chauffeur;
       _date_naissance_chauffeur = value.date_naissance_chauffeur;
+      _horaireTravail = value.horaireTravail;
     });
   }
 }
@@ -221,7 +228,7 @@ class TodoChauffeur {
       nom_chauffeur,
       prenom_chauffeur,
       telephone_chauffeur,
-      date_naissance_chauffeur;
+      date_naissance_chauffeur,horaireTravail;
   TodoChauffeur.fromJson(this.key, Map data) {
     cin_chauffeur =
         (data['cin_chauffeur'] == null ? '' : data['cin_chauffeur']);
@@ -237,6 +244,9 @@ class TodoChauffeur {
     date_naissance_chauffeur = (data['date_naissance_chauffeur'] == null
         ? ''
         : data['date_naissance_chauffeur']);
+    horaireTravail = (data['horaireTravail'] == null
+        ? ''
+        : data['horaireTravail']);
   }
 }
 
